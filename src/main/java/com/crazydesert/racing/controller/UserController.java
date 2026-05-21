@@ -2,6 +2,7 @@ package com.crazydesert.racing.controller;
 
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.UserCreateRequest;
+import com.crazydesert.racing.dto.UserUpdateRequest;
 import com.crazydesert.racing.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -40,8 +41,11 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        return userService.updateUser(id, updatedUser);
+    public User updateUser(
+            @PathVariable Long id,
+            @Valid @RequestBody UserUpdateRequest request) {
+
+        return userService.updateUser(id, request);
     }
 
     }

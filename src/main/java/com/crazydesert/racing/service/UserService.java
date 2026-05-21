@@ -2,6 +2,7 @@ package com.crazydesert.racing.service;
 
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.UserCreateRequest;
+import com.crazydesert.racing.dto.UserUpdateRequest;
 import com.crazydesert.racing.exception.UserNotFoundException;
 import com.crazydesert.racing.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,12 @@ public class UserService {
     }
 
     public User createUser(UserCreateRequest request){
-
+        System.out.println("EMAIL = " + request.email);
         User user = new User();
+
         user.name = request.name;
         user.age = request.age;
+        user.email = request.email;
 
         return userRepository.save(user);
     }
@@ -49,15 +52,15 @@ public User getUserById(Long id) {
                     ));
 }
 
-    public User updateUser(Long id, User updatedUser) {
+    public User updateUser(Long id, UserUpdateRequest request) {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException(
                                 "User with id " + id + " not found"
                         ));
 
-        existingUser.name = updatedUser.name;
-        existingUser.age = updatedUser.age;
+        existingUser.name = request.name;
+        existingUser.age = request.age;
 
         return userRepository.save(existingUser);
     }
