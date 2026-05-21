@@ -23,7 +23,7 @@ public class UserService {
     }
 
     public User createUser(UserCreateRequest request){
-        System.out.println("EMAIL = " + request.email);
+
         User user = new User();
 
         user.name = request.name;
@@ -61,6 +61,7 @@ public User getUserById(Long id) {
 
         existingUser.name = request.name;
         existingUser.age = request.age;
+        existingUser.email = request.email;
 
         return userRepository.save(existingUser);
     }
