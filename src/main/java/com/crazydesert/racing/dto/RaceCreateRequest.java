@@ -1,0 +1,24 @@
+package com.crazydesert.racing.dto;
+
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+
+import java.time.LocalDate;
+
+public class RaceCreateRequest {
+
+    @NotBlank(message = "Name must not be blank")
+    public String name;
+
+    @NotBlank(message = "Location must not be blank")
+    public String location;
+
+
+    public LocalDate startDate;
+
+    @Min(value = 1, message = "Max participants must be at least 1")
+    @Max(value = 500, message = "Max participants must not be greater than 500")
+    public int maxParticipants;
+
+}

@@ -22,7 +22,7 @@ public class RaceCarController {
 
     @PostMapping
     public RaceCar createRaceCar(
-            @Valid@RequestBody RaceCarCreateRequest request) {
+            @Valid @RequestBody RaceCarCreateRequest request) {
         return raceCarService.createRaceCar(request);
     }
 
@@ -45,7 +45,7 @@ public class RaceCarController {
     }
 
     @DeleteMapping("/{id}")
-    public String deleteRaceCarBiId(@PathVariable Long id){
+    public String deleteRaceCarById(@PathVariable Long id){
         raceCarService.deleteRaceCarById(id);
         return "Race car deleted with id: " + id;
     }
