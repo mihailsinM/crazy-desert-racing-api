@@ -11,6 +11,7 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public Map<String, String> handleValidationException(
@@ -28,6 +29,16 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(UserNotFoundException.class)
     public Map<String, String> handleUserNotFoundException(UserNotFoundException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(RaceCarNotFoundException.class)
+    public Map<String,String> handleRaceCarNotFoundException(RaceCarNotFoundException ex){
 
         Map<String, String> error = new HashMap<>();
         error.put("message", ex.getMessage());

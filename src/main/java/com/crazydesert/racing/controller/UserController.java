@@ -1,5 +1,6 @@
 package com.crazydesert.racing.controller;
 
+import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.UserCreateRequest;
 import com.crazydesert.racing.dto.UserUpdateRequest;
@@ -21,7 +22,7 @@ public class UserController {
     }
     @GetMapping("/users")
     public List<User> getUsers() {
-        return userService.getUsers();
+        return userService.getAllUsers();
     }
 
     @PostMapping("/users")
@@ -46,6 +47,13 @@ public class UserController {
             @Valid @RequestBody UserUpdateRequest request) {
 
         return userService.updateUser(id, request);
+    }
+
+    @GetMapping("/{userId}/cars")
+    public List<RaceCar> getUserCars(
+            @PathVariable Long userId) {
+
+        return userService.getUserCars(userId);
     }
 
     }
