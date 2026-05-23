@@ -17,6 +17,9 @@ public class User {
     public int age;
     public String email;
 
+    public String licenseCategory;
+    public boolean licenseVerified;
+
     @OneToMany(mappedBy = "owner")
     @JsonManagedReference
     public List<RaceCar> raceCars;

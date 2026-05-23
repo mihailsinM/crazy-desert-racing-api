@@ -34,6 +34,9 @@ public class UserService {
         user.age = request.age;
         user.email = request.email;
 
+        user.licenseCategory = request.licenseCategory;
+        user.licenseVerified = false;
+
         return userRepository.save(user);
     }
 
@@ -66,6 +69,8 @@ public User getUserById(Long id) {
         existingUser.name = request.name;
         existingUser.age = request.age;
         existingUser.email = request.email;
+        existingUser.licenseCategory = request.licenseCategory;
+        existingUser.licenseVerified = false;
 
         return userRepository.save(existingUser);
     }

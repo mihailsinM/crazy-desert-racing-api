@@ -14,4 +14,6 @@ public class UserCreateRequest {
     @Email(message = "Email must be valid")
     @NotBlank(message = "Email must not be blank")
     public String email;
+
+    public String licenseCategory;
 }

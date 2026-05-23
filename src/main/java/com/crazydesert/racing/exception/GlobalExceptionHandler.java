@@ -55,4 +55,47 @@ public class GlobalExceptionHandler {
 
         return error;
     }
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RaceCarOwnershipException.class)
+    public Map<String, String> handleRaceCarOwnershipException(
+            RaceCarOwnershipException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(LicenseNotVerifiedException.class)
+    public Map<String, String> handleLicenseNotVerifiedException(
+            LicenseNotVerifiedException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(DuplicateRaceRegistrationException.class)
+    public Map<String, String> handleDuplicateRaceRegistrationException(
+            DuplicateRaceRegistrationException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(RaceCapacityExceededException.class)
+    public Map<String, String> handleRaceCapacityExceededException(
+            RaceCapacityExceededException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
 }
