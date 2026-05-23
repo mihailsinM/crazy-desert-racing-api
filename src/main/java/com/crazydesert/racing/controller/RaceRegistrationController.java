@@ -3,6 +3,7 @@ package com.crazydesert.racing.controller;
 import com.crazydesert.racing.RaceRegistration;
 import com.crazydesert.racing.dto.RaceRegistrationCreateRequest;
 import com.crazydesert.racing.service.RaceRegistrationService;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,6 +19,7 @@ public class RaceRegistrationController {
 
     @PostMapping
     public RaceRegistration createRegistration(
+            @Valid
             @RequestBody RaceRegistrationCreateRequest request) {
 
         return raceRegistrationService.createRegistration(request);
