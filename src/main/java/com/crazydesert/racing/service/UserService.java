@@ -86,5 +86,17 @@ public User getUserById(Long id) {
         return raceCarRepository.findByOwnerId(userId);
     }
 
+    public User verifyLicense(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with id " + id + " not found"
+                        ));
+
+        user.licenseVerified = true;
+
+        return userRepository.save(user);
+    }
+
 
 }
