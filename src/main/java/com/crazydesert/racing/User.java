@@ -1,5 +1,6 @@
 package com.crazydesert.racing;
 
+import com.crazydesert.racing.enums.Role;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -19,6 +20,9 @@ public class User {
 
     public String licenseCategory;
     public boolean licenseVerified;
+
+    @Enumerated(EnumType.STRING)
+    public Role role;
 
     @OneToMany(mappedBy = "owner")
     @JsonManagedReference

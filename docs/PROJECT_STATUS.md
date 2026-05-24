@@ -19,6 +19,10 @@ Backend Foundation
 ## Completed
 
 - Verify license endpoint
+- ### Roles
+- Role enum
+- Default USER role for new users
+- Temporary make-admin endpoint
 
 ### User
 
@@ -72,7 +76,7 @@ Backend Foundation
 ## Planned Next Steps
 
 
-1. USER / ADMIN roles
+1. Spring Security
 2. JWT Authentication
 3. Response DTOs
 4. Refactoring

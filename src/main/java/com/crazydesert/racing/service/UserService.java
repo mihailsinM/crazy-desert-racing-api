@@ -4,6 +4,7 @@ import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.UserCreateRequest;
 import com.crazydesert.racing.dto.UserUpdateRequest;
+import com.crazydesert.racing.enums.Role;
 import com.crazydesert.racing.exception.UserNotFoundException;
 import com.crazydesert.racing.repository.RaceCarRepository;
 import com.crazydesert.racing.repository.UserRepository;
@@ -36,6 +37,8 @@ public class UserService {
 
         user.licenseCategory = request.licenseCategory;
         user.licenseVerified = false;
+
+        user.role = Role.USER;
 
         return userRepository.save(user);
     }
@@ -94,6 +97,18 @@ public User getUserById(Long id) {
                         ));
 
         user.licenseVerified = true;
+
+        return userRepository.save(user);
+    }
+
+    public User makeAdmin(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with id " + id + " not found"
+                        ));
+
+        user.role = Role.ADMIN;
 
         return userRepository.save(user);
     }

@@ -61,5 +61,10 @@ public class UserController {
         return userService.verifyLicense(id);
     }
 
+    @PutMapping("/users/{id}/make-admin")
+    public User makeAdmin(@PathVariable Long id) {
+        return userService.makeAdmin(id);
     }
+
+}
 
