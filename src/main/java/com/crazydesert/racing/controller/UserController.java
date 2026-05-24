@@ -56,7 +56,7 @@ public class UserController {
         return userService.getUserCars(userId);
     }
 
-    @PutMapping("/{id}/verify-license")
+    @PutMapping("/users/{id}/verify-license")
     public User verifyLicense(@PathVariable Long id) {
         return userService.verifyLicense(id);
     }

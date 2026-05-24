@@ -18,6 +18,8 @@ Backend Foundation
 
 ## Completed
 
+- Verify license endpoint
+
 ### User
 
 - User entity
@@ -63,18 +65,18 @@ Backend Foundation
 
 ## In Progress
 
-- Verify License endpoint
+- Nothing currently in progress.
 
 ---
 
 ## Planned Next Steps
 
-1. Verify License endpoint
-2. USER / ADMIN roles
-3. JWT Authentication
-4. Response DTOs
-5. Refactoring
-6. Frontend (React + TypeScript)
+
+1. USER / ADMIN roles
+2. JWT Authentication
+3. Response DTOs
+4. Refactoring
+5. Frontend (React + TypeScript)
 
 ---
 
