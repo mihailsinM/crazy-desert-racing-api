@@ -19,6 +19,17 @@ Backend Foundation
 ## Completed
 
 - Verify license endpoint
+
+Completed:
+- Added Spring Security dependency
+- Created SecurityConfig
+- Configured SecurityFilterChain
+- Added in-memory users
+- Protected verify-license endpoint
+- Protected make-admin endpoint
+- Tested ADMIN access (200 OK)
+- Tested unauthorized access (403 Forbidden)
+
 - ### Roles
 - Role enum
 - Default USER role for new users
@@ -77,6 +88,16 @@ Backend Foundation
 
 
 1. Spring Security
+
+Next:
+- Add password field to User
+- Introduce PasswordEncoder
+- Create CustomUserDetails
+- Create CustomUserDetailsService
+- Load users from database
+- Replace in-memory authentication
+- Prepare JWT authentication
+
 2. JWT Authentication
 3. Response DTOs
 4. Refactoring
