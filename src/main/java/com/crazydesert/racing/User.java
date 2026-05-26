@@ -20,6 +20,7 @@ public class User {
 
     public String licenseCategory;
     public boolean licenseVerified;
+    public String password;
 
     @Enumerated(EnumType.STRING)
     public Role role;

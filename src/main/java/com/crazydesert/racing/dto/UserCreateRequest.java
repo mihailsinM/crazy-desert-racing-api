@@ -16,4 +16,7 @@ public class UserCreateRequest {
     public String email;
 
     public String licenseCategory;
+
+    @NotBlank(message = "Password must not be blank")
+    public String password;
 }
