@@ -45,21 +45,38 @@ The goal is to build a modern platform that can serve as both a portfolio projec
 - Duplicate registration prevention
 - Capacity validation
 
+Status: Completed
+
 ---
 
 # Phase 2 - Security
 
+Completed:
+
 - USER role
 - ADMIN role
-- JWT Authentication
 - Endpoint authorization
+- Database authentication
+- Password hashing (BCrypt)
+
+Next:
+
+- JWT Authentication
 
 ---
 
 # Phase 3 - API Improvement
 
-- Response DTOs
-- Request DTO improvements
+Completed:
+
+- UserCreateRequest
+- UserResponse
+
+Next:
+
+- RaceResponse
+- RaceCarResponse
+- RegistrationResponse
 - API cleanup
 - Validation improvements
 
@@ -129,4 +146,13 @@ The goal is to build a modern platform that can serve as both a portfolio projec
 
 # Long-Term Goal
 
-Create a complete full-stack platform that demonstrates backend development, frontend development, architecture design, business logic implementation, and product thinking.
+Create a complete full-stack platform that demonstrates:
+
+- backend development
+- frontend development
+- architecture design
+- business logic implementation
+- security implementation
+- product thinking
+
+and can be confidently presented during technical interviews and included in a professional portfolio.

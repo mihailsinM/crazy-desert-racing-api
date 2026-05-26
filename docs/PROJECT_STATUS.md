@@ -12,26 +12,44 @@ crazy-desert-racing-api
 
 ## Current Stage
 
-Backend Foundation
+Security and Authentication
 
 ---
 
 ## Completed
 
-- Verify license endpoint
+### Security
 
-Completed:
 - Added Spring Security dependency
 - Created SecurityConfig
 - Configured SecurityFilterChain
-- Added in-memory users
+- Added Basic Authentication
 - Protected verify-license endpoint
 - Protected make-admin endpoint
 - Tested ADMIN access (200 OK)
-- Tested unauthorized access (403 Forbidden)
+- Tested USER access (403 Forbidden)
 
-- ### Roles
+### Authentication
+
+- Added password field to User
+- Added BCrypt password hashing
+- Added PasswordEncoder bean
+- Added UserRepository.findByEmail()
+- Added CustomUserDetailsService
+- Replaced InMemoryUserDetailsManager with PostgreSQL authentication
+- Tested database authentication
+
+### DTO
+
+- UserCreateRequest
+- UserResponse
+- Hidden password from API responses
+
+### Roles
+
 - Role enum
+- USER role
+- ADMIN role
 - Default USER role for new users
 - Temporary make-admin endpoint
 
@@ -86,22 +104,25 @@ Completed:
 
 ## Planned Next Steps
 
+1. JWT Authentication
+    - AuthenticationRequest DTO
+    - AuthenticationResponse DTO
+    - JwtService
+    - JwtAuthenticationFilter
+    - Login endpoint
+    - Bearer Token authentication
 
-1. Spring Security
+2. DTO Expansion
+    - RaceResponse
+    - RaceCarResponse
+    - RegistrationResponse
 
-Next:
-- Add password field to User
-- Introduce PasswordEncoder
-- Create CustomUserDetails
-- Create CustomUserDetailsService
-- Load users from database
-- Replace in-memory authentication
-- Prepare JWT authentication
+3. Refactoring
+    - Encapsulation (private fields)
+    - Getters and setters
+    - Lombok introduction
 
-2. JWT Authentication
-3. Response DTOs
-4. Refactoring
-5. Frontend (React + TypeScript)
+4. Frontend (React + TypeScript)
 
 ---
 
