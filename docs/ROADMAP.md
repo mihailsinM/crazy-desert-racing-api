@@ -21,6 +21,8 @@ The goal is to build a modern platform that can serve as both a portfolio projec
 
 # Phase 1 - Backend Foundation
 
+Status: Completed
+
 ## User Management
 
 - User CRUD
@@ -45,11 +47,11 @@ The goal is to build a modern platform that can serve as both a portfolio projec
 - Duplicate registration prevention
 - Capacity validation
 
-Status: Completed
-
 ---
 
 # Phase 2 - Security
+
+Status: In Progress
 
 Completed:
 
@@ -57,23 +59,35 @@ Completed:
 - ADMIN role
 - Endpoint authorization
 - Database authentication
-- Password hashing (BCrypt)
+- Password hashing with BCrypt
+- Login endpoint
+- JWT generation
+- JWT Bearer Token authentication
+- JWT filter
+- Protected ADMIN endpoints with JWT
 
 Next:
 
-- JWT Authentication
+- Disable Basic Auth
+- Make security stateless
+- Improve JWT validation
+- Handle expired and invalid tokens
 
 ---
 
 # Phase 3 - API Improvement
 
+Status: Started
+
 Completed:
 
 - UserCreateRequest
-- UserResponse
+- UserResponse for user creation
+- Hidden password from user creation response
 
 Next:
 
+- Hide password from all user responses
 - RaceResponse
 - RaceCarResponse
 - RegistrationResponse
@@ -88,6 +102,9 @@ Next:
 - TypeScript
 - Responsive design
 - Modern UI
+- Login page
+- JWT authentication on frontend
+- Protected routes
 
 ---
 
@@ -114,6 +131,7 @@ Next:
 - Global chat
 - Event chat
 - VIP chat
+- Future AI assistant integration
 
 ---
 
@@ -153,6 +171,7 @@ Create a complete full-stack platform that demonstrates:
 - architecture design
 - business logic implementation
 - security implementation
+- JWT authentication
 - product thinking
 
 and can be confidently presented during technical interviews and included in a professional portfolio.
