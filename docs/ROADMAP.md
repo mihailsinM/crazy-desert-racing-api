@@ -51,7 +51,7 @@ Status: Completed
 
 # Phase 2 - Security
 
-Status: In Progress
+Status: Mostly Completed
 
 Completed:
 
@@ -64,14 +64,18 @@ Completed:
 - JWT generation
 - JWT Bearer Token authentication
 - JWT filter
+- Stateless session management
+- Basic Auth disabled
 - Protected ADMIN endpoints with JWT
+- GET /users/me endpoint
+- USER and ADMIN access rules for User endpoints
 
-Next:
+Remaining:
 
-- Disable Basic Auth
-- Make security stateless
-- Improve JWT validation
-- Handle expired and invalid tokens
+- Improve expired token handling
+- Improve invalid token handling
+- Add refresh token strategy later
+- Finish ownership security for user profile updates
 
 ---
 
@@ -82,12 +86,19 @@ Status: Started
 Completed:
 
 - UserCreateRequest
-- UserResponse for user creation
+- UserResponse
 - Hidden password from user creation response
+- Hidden password from main User API responses
+- User DTO used for:
+    - POST /users
+    - GET /users
+    - GET /users/{id}
+    - PUT /users/{id}
+    - PUT /users/{id}/verify-license
+    - PUT /users/{id}/make-admin
 
 Next:
 
-- Hide password from all user responses
 - RaceResponse
 - RaceCarResponse
 - RegistrationResponse
@@ -98,13 +109,20 @@ Next:
 
 # Phase 4 - Frontend
 
+Status: Starting Next
+
+Planned first frontend version:
+
 - React
 - TypeScript
 - Responsive design
 - Modern UI
 - Login page
 - JWT authentication on frontend
-- Protected routes
+- Store JWT token
+- Call /users/me
+- Show current user dashboard
+- Protected routes later
 
 ---
 
@@ -172,6 +190,7 @@ Create a complete full-stack platform that demonstrates:
 - business logic implementation
 - security implementation
 - JWT authentication
+- DTO architecture
 - product thinking
 
 and can be confidently presented during technical interviews and included in a professional portfolio.

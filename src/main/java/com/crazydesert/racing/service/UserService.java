@@ -42,8 +42,11 @@ public class UserService {
         return response;
     }
 
-    public List<User> getAllUsers(){
-        return userRepository.findAll();
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     public UserResponse createUser(UserCreateRequest request) {
@@ -75,16 +78,18 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
-public User getUserById(Long id) {
+    public UserResponse getUserById(Long id) {
 
-    return userRepository.findById(id)
-            .orElseThrow(() ->
-                    new UserNotFoundException(
-                            "User with id " + id + " not found"
-                    ));
-}
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with id " + id + " not found"
+                        ));
 
-    public User updateUser(Long id, UserUpdateRequest request) {
+        return toResponse(user);
+    }
+
+    public UserResponse updateUser(Long id, UserUpdateRequest request) {
         User existingUser = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException(
@@ -97,7 +102,9 @@ public User getUserById(Long id) {
         existingUser.licenseCategory = request.licenseCategory;
         existingUser.licenseVerified = false;
 
-        return userRepository.save(existingUser);
+        User savedUser = userRepository.save(existingUser);
+
+        return toResponse(savedUser);
     }
 
     public List<RaceCar> getUserCars(Long userId) {
@@ -111,7 +118,7 @@ public User getUserById(Long id) {
         return raceCarRepository.findByOwnerId(userId);
     }
 
-    public User verifyLicense(Long id) {
+    public UserResponse verifyLicense(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException(
@@ -119,11 +126,12 @@ public User getUserById(Long id) {
                         ));
 
         user.licenseVerified = true;
+        User savedUser = userRepository.save(user);
 
-        return userRepository.save(user);
+        return toResponse(savedUser);
     }
 
-    public User makeAdmin(Long id) {
+    public UserResponse makeAdmin(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() ->
                         new UserNotFoundException(
@@ -131,8 +139,19 @@ public User getUserById(Long id) {
                         ));
 
         user.role = Role.ADMIN;
+        User savedUser = userRepository.save(user);
 
-        return userRepository.save(user);
+        return toResponse(savedUser);
+    }
+
+    public UserResponse getCurrentUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with email " + email + " not found"
+                        ));
+
+        return toResponse(user);
     }
 
 

@@ -1,12 +1,12 @@
 package com.crazydesert.racing.controller;
 
 import com.crazydesert.racing.RaceCar;
-import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.UserCreateRequest;
 import com.crazydesert.racing.dto.UserResponse;
 import com.crazydesert.racing.dto.UserUpdateRequest;
 import com.crazydesert.racing.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class UserController {
 
     }
     @GetMapping("/users")
-    public List<User> getUsers() {
+    public List<UserResponse> getUsers() {
         return userService.getAllUsers();
     }
 
@@ -40,12 +40,12 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}")
-    public User getUserById(@PathVariable Long id){
+    public UserResponse getUserById(@PathVariable Long id) {
         return userService.getUserById(id);
     }
 
     @PutMapping("/users/{id}")
-    public User updateUser(
+    public UserResponse updateUser(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
 
@@ -60,13 +60,21 @@ public class UserController {
     }
 
     @PutMapping("/users/{id}/verify-license")
-    public User verifyLicense(@PathVariable Long id) {
+    public UserResponse verifyLicense(@PathVariable Long id) {
         return userService.verifyLicense(id);
     }
 
     @PutMapping("/users/{id}/make-admin")
-    public User makeAdmin(@PathVariable Long id) {
+    public UserResponse makeAdmin(@PathVariable Long id) {
         return userService.makeAdmin(id);
+    }
+
+    @GetMapping("/users/me")
+    public UserResponse getCurrentUser(Authentication authentication) {
+
+        String email = authentication.getName();
+
+        return userService.getCurrentUser(email);
     }
 
 }

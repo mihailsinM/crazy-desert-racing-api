@@ -12,7 +12,7 @@ crazy-desert-racing-api
 
 ## Current Stage
 
-JWT Authentication
+JWT Authentication and Frontend Preparation
 
 ---
 
@@ -49,7 +49,6 @@ JWT Authentication
 - Added Spring Security dependency
 - Created SecurityConfig
 - Configured SecurityFilterChain
-- Added Basic Authentication
 - Protected verify-license endpoint
 - Protected make-admin endpoint
 - Tested USER access (403 Forbidden)
@@ -79,12 +78,34 @@ JWT Authentication
 - Loaded user from PostgreSQL using JWT
 - Added authentication to SecurityContext
 - Tested protected ADMIN endpoint with Bearer Token
+- Disabled Basic Authentication
+- Configured stateless session management
+- Tested expired JWT behavior
+- Tested USER token access
+- Tested ADMIN token access
+
+### User Authorization
+
+- Added GET /users/me endpoint
+- Current user is resolved from JWT SecurityContext
+- USER can access GET /users/me
+- USER cannot access GET /users
+- USER cannot access GET /users/{id}
+- ADMIN can access GET /users
+- ADMIN can access GET /users/{id}
+- ADMIN can access verify-license
+- ADMIN can access make-admin
 
 ### DTO
 
 - UserCreateRequest
 - UserResponse
 - Hidden password from user creation response
+- Hidden password from GET /users
+- Hidden password from GET /users/{id}
+- Hidden password from PUT /users/{id}
+- Hidden password from verify-license response
+- Hidden password from make-admin response
 
 ### Validation
 
@@ -100,38 +121,58 @@ JWT Authentication
 
 ## In Progress
 
-- JWT Security cleanup
+- Frontend preparation
+
+---
+
+## Upcoming Development Backlog
+
+1. Finish User Security
+   - USER can update only own profile
+   - USER cannot update other users
+   - ADMIN keeps full user management access
+
+2. DTO Expansion
+   - RaceResponse
+   - RaceCarResponse
+   - RegistrationResponse
+   - Hide internal entity fields from all API responses
+
+3. JWT Improvements
+   - Improve token validation
+   - Handle expired tokens cleanly
+   - Add refresh token strategy later
+
+4. Frontend Start
+   - Create React + TypeScript frontend
+   - Login page
+   - Store JWT token
+   - Call /auth/login
+   - Call /users/me
+   - Show current user dashboard
+
+5. Refactoring
+   - Move entity fields from public to private
+   - Add getters and setters
+   - Introduce Lombok later
 
 ---
 
 ## Planned Next Steps
 
-1. JWT Security Cleanup
-   - Disable Basic Auth
-   - Make API stateless
-   - Improve JWT validation
-   - Handle expired or invalid tokens
+1. Start Frontend
+   - Create React + TypeScript app
+   - Build login page
+   - Connect login page to /auth/login
+   - Store JWT token
+   - Call /users/me
+   - Display current user dashboard
 
-2. DTO Expansion
-   - Hide password from all user responses
-   - Add UserResponse to verify-license
-   - Add UserResponse to make-admin
-   - Add RaceResponse
-   - Add RaceCarResponse
-   - Add RegistrationResponse
-
-3. Refactoring
-   - Encapsulation
-   - Private fields
-   - Getters and setters
-   - Lombok introduction
-
-4. Frontend
-   - React
-   - TypeScript
-   - Login page
-   - JWT storage
-   - Protected routes
+2. Continue Backend Improvements
+   - Finish User Security
+   - DTO Expansion
+   - JWT validation improvements
+   - Refactoring
 
 ---
 
