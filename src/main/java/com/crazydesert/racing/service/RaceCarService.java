@@ -47,6 +47,16 @@ public class RaceCarService {
         return raceCarRepository.findAll();
     }
 
+    public List<RaceCar> getRaceCarsByOwnerEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with email " + email + " not found"
+                        ));
+
+        return raceCarRepository.findByOwnerId(user.id);
+    }
+
     public RaceCar createRaceCar(RaceCarCreateRequest request) {
 
         RaceCar raceCar = new RaceCar();
@@ -78,6 +88,24 @@ public class RaceCarService {
         existingRaceCar.imageUrl = request.imageUrl;
 
         return raceCarRepository.save(existingRaceCar);
+    }
+
+    public RaceCar createMyRaceCar(String email, RaceCarCreateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with email " + email + " not found"
+                        ));
+
+        RaceCar raceCar = new RaceCar();
+
+        raceCar.name = request.name;
+        raceCar.brand = request.brand;
+        raceCar.horsePower = request.horsePower;
+        raceCar.imageUrl = request.imageUrl;
+        raceCar.owner = user;
+
+        return raceCarRepository.save(raceCar);
     }
 
     public void deleteRaceCarById(Long id) {

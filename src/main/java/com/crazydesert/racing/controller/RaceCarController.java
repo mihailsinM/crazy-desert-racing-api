@@ -6,6 +6,7 @@ import com.crazydesert.racing.dto.RaceCarUpdateRequest;
 import com.crazydesert.racing.service.RaceCarService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -29,6 +30,23 @@ public class RaceCarController {
     @GetMapping
     public List<RaceCar> getAllRaceCars(){
         return raceCarService.getAllRaceCars();
+    }
+
+    @GetMapping("/my")
+    public List<RaceCar> getMyRaceCars(Authentication authentication) {
+        String email = authentication.getName();
+
+        return raceCarService.getRaceCarsByOwnerEmail(email);
+    }
+
+    @PostMapping("/my")
+    public RaceCar createMyRaceCar(
+            Authentication authentication,
+            @Valid @RequestBody RaceCarCreateRequest request) {
+
+        String email = authentication.getName();
+
+        return raceCarService.createMyRaceCar(email, request);
     }
 
     @GetMapping("/{id}")
