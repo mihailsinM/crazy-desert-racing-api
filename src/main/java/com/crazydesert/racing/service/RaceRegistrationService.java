@@ -5,6 +5,7 @@ import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.RaceRegistration;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.RaceRegistrationCreateRequest;
+import com.crazydesert.racing.dto.RaceRegistrationMyCreateRequest;
 import com.crazydesert.racing.exception.*;
 import com.crazydesert.racing.repository.RaceCarRepository;
 import com.crazydesert.racing.repository.RaceRegistrationRepository;
@@ -53,13 +54,13 @@ public class RaceRegistrationService {
                                 "Race with id " + request.raceId + " not found"
                         ));
 
-        if (!raceCar.owner.id.equals(user.id)) {
+        if (!raceCar.getOwner().getId().equals(user.getId())) {
             throw new RaceCarOwnershipException(
                     "Race car does not belong to user"
             );
         }
 
-        if (!user.licenseVerified) {
+        if (!user.isLicenseVerified()) {
             throw new LicenseNotVerifiedException(
                     "User license is not verified"
             );
@@ -73,7 +74,7 @@ public class RaceRegistrationService {
                 );
 
         long registrationsCount =
-                raceRegistrationRepository.countByRaceId(race.id);
+                raceRegistrationRepository.countByRaceId(race.getId());
 
         if (registrationExists) {
             throw new DuplicateRaceRegistrationException(
@@ -81,7 +82,7 @@ public class RaceRegistrationService {
             );
         }
 
-        if (registrationsCount >= race.maxParticipants) {
+        if (registrationsCount >= race.getMaxParticipants()) {
             throw new RaceCapacityExceededException(
                     "Race has reached maximum number of participants"
             );
@@ -89,10 +90,30 @@ public class RaceRegistrationService {
 
         RaceRegistration registration = new RaceRegistration();
 
-        registration.user = user;
-        registration.raceCar = raceCar;
-        registration.race = race;
+        registration.setUser(user);
+        registration.setRaceCar(raceCar);
+        registration.setRace(race);
 
         return raceRegistrationRepository.save(registration);
+    }
+
+    public RaceRegistration createMyRegistration(
+            String email,
+            RaceRegistrationMyCreateRequest request) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with email " + email + " not found"
+                        ));
+
+        RaceRegistrationCreateRequest fullRequest =
+                new RaceRegistrationCreateRequest();
+
+        fullRequest.userId = user.getId();
+        fullRequest.raceCarId = request.raceCarId;
+        fullRequest.raceId = request.raceId;
+
+        return createRegistration(fullRequest);
     }
 }

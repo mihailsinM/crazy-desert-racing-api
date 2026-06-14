@@ -125,6 +125,54 @@ Planned first frontend version:
 - Protected routes later
 
 ---
+Completed:
+
+- React + TypeScript frontend
+- Responsive design
+- Login page
+- Registration page
+- JWT authentication on frontend
+- Protected routes
+- Dashboard
+- My Cars page
+- Add Car page
+- Car Details page
+- Edit Car page
+- Delete Car
+- Races page
+- Race Details page
+- Register for race
+- Admin race actions
+- VIP Club page
+- Desert UI component system
+
+# Phase 4.5 - Backend Refactoring
+
+Status: Completed
+
+Completed:
+
+- Entity encapsulation
+- User fields moved from public to private
+- RaceCar fields moved from public to private
+- Race fields moved from public to private
+- RaceRegistration fields moved from public to private
+- Getters and setters added
+- Service layer updated
+- Direct entity field access removed
+
+# Phase 4.6 - Race Participants
+
+Status: Next
+
+Planned:
+
+- Add findByRaceId to RaceRegistrationRepository
+- Create RaceParticipantResponse DTO
+- Add GET /races/{id}/participants
+- Show participants count on frontend
+- Show registered cars
+- Show driver names
 
 # Phase 5 - Membership System
 

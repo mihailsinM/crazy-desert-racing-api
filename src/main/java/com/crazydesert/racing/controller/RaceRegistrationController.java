@@ -4,6 +4,8 @@ import com.crazydesert.racing.RaceRegistration;
 import com.crazydesert.racing.dto.RaceRegistrationCreateRequest;
 import com.crazydesert.racing.service.RaceRegistrationService;
 import jakarta.validation.Valid;
+import com.crazydesert.racing.dto.RaceRegistrationMyCreateRequest;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,5 +25,15 @@ public class RaceRegistrationController {
             @RequestBody RaceRegistrationCreateRequest request) {
 
         return raceRegistrationService.createRegistration(request);
+    }
+
+    @PostMapping("/my")
+    public RaceRegistration createMyRegistration(
+            Authentication authentication,
+            @Valid @RequestBody RaceRegistrationMyCreateRequest request) {
+
+        String email = authentication.getName();
+
+        return raceRegistrationService.createMyRegistration(email, request);
     }
 }

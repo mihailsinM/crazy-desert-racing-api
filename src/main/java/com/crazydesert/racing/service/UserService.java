@@ -31,13 +31,13 @@ public class UserService {
 
         UserResponse response = new UserResponse();
 
-        response.id = user.id;
-        response.name = user.name;
-        response.age = user.age;
-        response.email = user.email;
-        response.licenseCategory = user.licenseCategory;
-        response.licenseVerified = user.licenseVerified;
-        response.role = user.role;
+        response.id = user.getId();
+        response.name = user.getName();
+        response.age = user.getAge();
+        response.email = user.getEmail();
+        response.licenseCategory = user.getLicenseCategory();
+        response.licenseVerified = user.isLicenseVerified();
+        response.role = user.getRole();
 
         return response;
     }
@@ -53,15 +53,15 @@ public class UserService {
 
         User user = new User();
 
-        user.name = request.name;
-        user.age = request.age;
-        user.email = request.email;
-        user.licenseCategory = request.licenseCategory;
-        user.licenseVerified = false;
+        user.setName(request.name);
+        user.setAge(request.age);
+        user.setEmail(request.email);
+        user.setLicenseCategory(request.licenseCategory);
+        user.setLicenseVerified(false);
 
-        user.password = passwordEncoder.encode(request.password);
+        user.setPassword(passwordEncoder.encode(request.password));
 
-        user.role = Role.USER;
+        user.setRole(Role.USER);
 
         User savedUser = userRepository.save(user);
 
@@ -96,11 +96,11 @@ public class UserService {
                                 "User with id " + id + " not found"
                         ));
 
-        existingUser.name = request.name;
-        existingUser.age = request.age;
-        existingUser.email = request.email;
-        existingUser.licenseCategory = request.licenseCategory;
-        existingUser.licenseVerified = false;
+        existingUser.setName(request.name);
+        existingUser.setAge(request.age);
+        existingUser.setEmail(request.email);
+        existingUser.setLicenseCategory(request.licenseCategory);
+        existingUser.setLicenseVerified(false);
 
         User savedUser = userRepository.save(existingUser);
 
@@ -125,7 +125,7 @@ public class UserService {
                                 "User with id " + id + " not found"
                         ));
 
-        user.licenseVerified = true;
+        user.setLicenseVerified(true);
         User savedUser = userRepository.save(user);
 
         return toResponse(savedUser);
@@ -138,7 +138,7 @@ public class UserService {
                                 "User with id " + id + " not found"
                         ));
 
-        user.role = Role.ADMIN;
+        user.setRole(Role.ADMIN);
         User savedUser = userRepository.save(user);
 
         return toResponse(savedUser);

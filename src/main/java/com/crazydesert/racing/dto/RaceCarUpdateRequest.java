@@ -16,4 +16,6 @@ public class RaceCarUpdateRequest {
 
     @NotBlank(message = "Image URL must not be blank")
     public String imageUrl;
+
+    public String imagePosition;
 }

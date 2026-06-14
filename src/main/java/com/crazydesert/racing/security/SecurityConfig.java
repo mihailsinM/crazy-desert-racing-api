@@ -44,6 +44,10 @@ public class SecurityConfig {
                         .requestMatchers("/users/*/make-admin").hasRole("ADMIN")
                         .requestMatchers("/users/*/verify-license").hasRole("ADMIN")
 
+                        .requestMatchers(HttpMethod.POST, "/races").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/races/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/races/*").hasRole("ADMIN")
+
                         .anyRequest().permitAll()
                 )
                 .httpBasic(httpBasic -> httpBasic.disable());

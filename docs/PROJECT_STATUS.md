@@ -12,6 +12,7 @@ crazy-desert-racing-api
 
 ## Current Stage
 
+Frontend MVP Completion and Backend Cleanup
 JWT Authentication and Frontend Preparation
 
 ---
@@ -84,6 +85,26 @@ JWT Authentication and Frontend Preparation
 - Tested USER token access
 - Tested ADMIN token access
 
+### Frontend Integration
+
+- React + TypeScript frontend created
+- Login page implemented
+- Registration page implemented
+- JWT token stored on frontend
+- Protected routes added
+- Dashboard page implemented
+- My Cars page implemented
+- Add Car page implemented
+- Car Details page implemented
+- Edit Car page implemented
+- Delete Car functionality implemented
+- Races page implemented
+- Race Details page implemented
+- Register for race from frontend
+- Admin race actions added
+- VIP Club page implemented
+- Desert UI component system created
+
 ### User Authorization
 
 - Added GET /users/me endpoint
@@ -107,6 +128,20 @@ JWT Authentication and Frontend Preparation
 - Hidden password from verify-license response
 - Hidden password from make-admin response
 
+### Race Car Improvements
+
+- Added imageUrl support
+- Added imagePosition support
+- Supported image positions:
+- CENTER
+- LEFT
+- RIGHT
+- TOP
+- BOTTOM
+- Added GET /race-cars/my endpoint
+- Added authenticated car creation flow
+- Added car delete flow
+
 ### Validation
 
 - Bean Validation
@@ -121,6 +156,9 @@ JWT Authentication and Frontend Preparation
 
 ## In Progress
 
+- Race participants endpoint
+- Marketplace status planning
+- Admin Dashboard planning
 - Frontend preparation
 
 ---
@@ -152,9 +190,18 @@ JWT Authentication and Frontend Preparation
    - Show current user dashboard
 
 5. Refactoring
-   - Move entity fields from public to private
-   - Add getters and setters
-   - Introduce Lombok later
+
+   - ### Entity Encapsulation Refactoring
+
+- Moved entity fields from public to private
+- Added getters and setters
+- Refactored User entity
+- Refactored RaceCar entity
+- Refactored Race entity
+- Refactored RaceRegistration entity
+- Updated service layer to use getters and setters
+- Backend starts successfully after refactoring
+- Introduce Lombok later
 
 ---
 

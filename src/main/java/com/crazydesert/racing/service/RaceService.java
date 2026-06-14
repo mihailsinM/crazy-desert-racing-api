@@ -4,6 +4,7 @@ package com.crazydesert.racing.service;
 import com.crazydesert.racing.Race;
 import com.crazydesert.racing.dto.RaceCreateRequest;
 import com.crazydesert.racing.dto.RaceUpdateRequest;
+import com.crazydesert.racing.enums.RaceStatus;
 import com.crazydesert.racing.exception.RaceNotFoundException;
 import com.crazydesert.racing.repository.RaceRepository;
 import org.springframework.stereotype.Service;
@@ -22,10 +23,12 @@ public class RaceService {
     public Race createRace(RaceCreateRequest request) {
         Race race = new Race();
 
-        race.name = request.name;
-        race.location = request.location;
-        race.startDate = request.startDate;
-        race.maxParticipants = request.maxParticipants;
+        race.setName(request.name);
+        race.setLocation(request.location);
+        race.setStartDate(request.startDate);
+        race.setMaxParticipants(request.maxParticipants);
+        race.setStatus(RaceStatus.UPCOMING);
+        race.setAdminMessage(null);
 
         return raceRepository.save(race);
     }
@@ -45,10 +48,12 @@ public class RaceService {
                         new RaceNotFoundException(
                                 "Race with id " + id + " not found"
                         ));
-        existingRace.name = request.name;
-        existingRace.location = request.location;
-        existingRace.startDate = request.startDate;
-        existingRace.maxParticipants = request.maxParticipants;
+        existingRace.setName(request.name);
+        existingRace.setLocation(request.location);
+        existingRace.setStartDate(request.startDate);
+        existingRace.setMaxParticipants(request.maxParticipants);
+        existingRace.setStatus(request.status);
+        existingRace.setAdminMessage(request.adminMessage);
 
         return raceRepository.save(existingRace);
     }

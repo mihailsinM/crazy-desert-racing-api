@@ -38,7 +38,7 @@ public class RaceCarService {
                                 "Race car with id " + raceCarId + " not found"
                         ));
 
-        raceCar.owner = user;
+        raceCar.setOwner(user);
 
         return raceCarRepository.save(raceCar);
     }
@@ -54,17 +54,22 @@ public class RaceCarService {
                                 "User with email " + email + " not found"
                         ));
 
-        return raceCarRepository.findByOwnerId(user.id);
+        return raceCarRepository.findByOwnerId(user.getId());
     }
 
     public RaceCar createRaceCar(RaceCarCreateRequest request) {
 
         RaceCar raceCar = new RaceCar();
 
-        raceCar.name = request.name;
-        raceCar.brand = request.brand;
-        raceCar.horsePower = request.horsePower;
-        raceCar.imageUrl = request.imageUrl;
+        raceCar.setName(request.name);
+        raceCar.setBrand(request.brand);
+        raceCar.setHorsePower(request.horsePower);
+        raceCar.setImageUrl(request.imageUrl);
+        raceCar.setImagePosition(
+                request.imagePosition == null || request.imagePosition.isBlank()
+                        ? "CENTER"
+                        : request.imagePosition
+        );
 
         return raceCarRepository.save(raceCar);
     }
@@ -77,15 +82,18 @@ public class RaceCarService {
     }
 
     public RaceCar updateRaceCar(Long id, RaceCarUpdateRequest request) {
+
         RaceCar existingRaceCar = raceCarRepository.findById(id)
-                .orElseThrow(()->
+                .orElseThrow(() ->
                         new RaceCarNotFoundException(
                                 "Race car with id " + id + " not found"
                         ));
-        existingRaceCar.name = request.name;
-        existingRaceCar.brand = request.brand;
-        existingRaceCar.horsePower = request.horsePower;
-        existingRaceCar.imageUrl = request.imageUrl;
+
+        existingRaceCar.setName(request.name);
+        existingRaceCar.setBrand(request.brand);
+        existingRaceCar.setHorsePower(request.horsePower);
+        existingRaceCar.setImageUrl(request.imageUrl);
+        existingRaceCar.setImagePosition(request.imagePosition);
 
         return raceCarRepository.save(existingRaceCar);
     }
@@ -99,11 +107,17 @@ public class RaceCarService {
 
         RaceCar raceCar = new RaceCar();
 
-        raceCar.name = request.name;
-        raceCar.brand = request.brand;
-        raceCar.horsePower = request.horsePower;
-        raceCar.imageUrl = request.imageUrl;
-        raceCar.owner = user;
+        raceCar.setName(request.name);
+        raceCar.setBrand(request.brand);
+        raceCar.setHorsePower(request.horsePower);
+        raceCar.setImageUrl(request.imageUrl);
+        raceCar.setImagePosition(
+                request.imagePosition == null || request.imagePosition.isBlank()
+                        ? "CENTER"
+                        : request.imagePosition
+        );
+
+        raceCar.setOwner(user);
 
         return raceCarRepository.save(raceCar);
     }

@@ -1,23 +1,52 @@
 package com.crazydesert.racing;
 
 import jakarta.persistence.*;
+
 @Entity
 @Table(name = "race_registrations")
 public class RaceRegistration {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    public User user;
+    private User user;
 
     @ManyToOne
     @JoinColumn(name = "race_car_id")
-    public RaceCar raceCar;
+    private RaceCar raceCar;
 
     @ManyToOne
     @JoinColumn(name = "race_id")
-    public Race race;
+    private Race race;
+
+    public Long getId() {
+        return id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public RaceCar getRaceCar() {
+        return raceCar;
+    }
+
+    public Race getRace() {
+        return race;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public void setRaceCar(RaceCar raceCar) {
+        this.raceCar = raceCar;
+    }
+
+    public void setRace(Race race) {
+        this.race = race;
+    }
 }
