@@ -5,7 +5,9 @@ import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
 import com.crazydesert.racing.dto.RaceCarUpdateRequest;
+import com.crazydesert.racing.enums.Role;
 import com.crazydesert.racing.exception.RaceCarNotFoundException;
+import com.crazydesert.racing.exception.RaceCarOwnershipException;
 import com.crazydesert.racing.exception.UserNotFoundException;
 import com.crazydesert.racing.repository.RaceCarRepository;
 import com.crazydesert.racing.repository.UserRepository;
@@ -81,13 +83,20 @@ public class RaceCarService {
                                 "Race car with id " + id + " not found"));
     }
 
-    public RaceCar updateRaceCar(Long id, RaceCarUpdateRequest request) {
+    public RaceCar updateRaceCar(
+            String currentUserEmail,
+            Long id,
+            RaceCarUpdateRequest request) {
+
+        User currentUser = getUserByEmail(currentUserEmail);
 
         RaceCar existingRaceCar = raceCarRepository.findById(id)
                 .orElseThrow(() ->
                         new RaceCarNotFoundException(
                                 "Race car with id " + id + " not found"
                         ));
+
+        validateCanManageRaceCar(currentUser, existingRaceCar);
 
         existingRaceCar.setName(request.name);
         existingRaceCar.setBrand(request.brand);
@@ -122,13 +131,37 @@ public class RaceCarService {
         return raceCarRepository.save(raceCar);
     }
 
-    public void deleteRaceCarById(Long id) {
-        if (!raceCarRepository.existsById(id)) {
-            throw new RaceCarNotFoundException(
-                    "Race car with id " + id + " not found"
+    public void deleteRaceCarById(String currentUserEmail, Long id) {
+        User currentUser = getUserByEmail(currentUserEmail);
+
+        RaceCar raceCar = raceCarRepository.findById(id)
+                .orElseThrow(() ->
+                        new RaceCarNotFoundException(
+                                "Race car with id " + id + " not found"
+                        ));
+
+        validateCanManageRaceCar(currentUser, raceCar);
+
+        raceCarRepository.delete(raceCar);
+    }
+
+    private User getUserByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with email " + email + " not found"
+                        ));
+    }
+
+    private void validateCanManageRaceCar(User currentUser, RaceCar raceCar) {
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+        boolean isOwner = raceCar.getOwner() != null
+                && raceCar.getOwner().getId().equals(currentUser.getId());
+
+        if (!isAdmin && !isOwner) {
+            throw new RaceCarOwnershipException(
+                    "You can manage only your own race cars"
             );
         }
-
-        raceCarRepository.deleteById(id);
     }
 }

@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
 
         return error;
     }
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     @ExceptionHandler(RaceCarOwnershipException.class)
     public Map<String, String> handleRaceCarOwnershipException(
             RaceCarOwnershipException ex) {
