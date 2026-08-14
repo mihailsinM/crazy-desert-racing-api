@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import com.crazydesert.racing.dto.RaceRegistrationMyCreateRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import com.crazydesert.racing.dto.RaceParticipantResponse;
+import java.util.List;
 
 @RestController
 @RequestMapping("/registrations")
@@ -35,5 +37,12 @@ public class RaceRegistrationController {
         String email = authentication.getName();
 
         return raceRegistrationService.createMyRegistration(email, request);
+    }
+
+    @GetMapping("/race/{raceId}/participants")
+    public List<RaceParticipantResponse> getParticipants(
+            @PathVariable Long raceId) {
+
+        return raceRegistrationService.getParticipantsByRaceId(raceId);
     }
 }

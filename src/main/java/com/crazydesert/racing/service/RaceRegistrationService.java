@@ -12,6 +12,8 @@ import com.crazydesert.racing.repository.RaceRegistrationRepository;
 import com.crazydesert.racing.repository.RaceRepository;
 import com.crazydesert.racing.repository.UserRepository;
 import org.springframework.stereotype.Service;
+import com.crazydesert.racing.dto.RaceParticipantResponse;
+import java.util.List;
 
 @Service
 public class RaceRegistrationService {
@@ -115,5 +117,22 @@ public class RaceRegistrationService {
         fullRequest.raceId = request.raceId;
 
         return createRegistration(fullRequest);
+    }
+
+    public List<RaceParticipantResponse> getParticipantsByRaceId(Long raceId) {
+
+        List<RaceRegistration> registrations =
+                raceRegistrationRepository.findByRaceId(raceId);
+
+        return registrations.stream()
+                .map(registration -> new RaceParticipantResponse(
+                        registration.getId(),
+                        registration.getUser().getId(),
+                        registration.getUser().getName(),
+                        registration.getRaceCar().getId(),
+                        registration.getRaceCar().getName(),
+                        registration.getRaceCar().getBrand()
+                ))
+                .toList();
     }
 }
