@@ -57,14 +57,18 @@ public class RaceCarController {
     @PutMapping("/{id}")
     public RaceCar updateRaceCar(
             @PathVariable Long id,
+            Authentication authentication,
             @Valid @RequestBody RaceCarUpdateRequest request){
 
-        return raceCarService.updateRaceCar(id, request);
+        return raceCarService.updateRaceCar(authentication.getName(), id, request);
     }
 
     @DeleteMapping("/{id}")
-    public String deleteRaceCarById(@PathVariable Long id){
-        raceCarService.deleteRaceCarById(id);
+    public String deleteRaceCarById(
+            @PathVariable Long id,
+            Authentication authentication){
+
+        raceCarService.deleteRaceCarById(authentication.getName(), id);
         return "Race car deleted with id: " + id;
     }
 
