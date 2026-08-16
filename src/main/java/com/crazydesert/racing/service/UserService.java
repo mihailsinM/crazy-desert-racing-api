@@ -61,9 +61,7 @@ public class UserService {
     }
 
     private String buildAvatarUrl(User user) {
-        byte[] avatarData = user.getAvatarData();
-
-        if (avatarData == null || avatarData.length == 0) {
+        if (user.getAvatarContentType() == null) {
             return null;
         }
 
