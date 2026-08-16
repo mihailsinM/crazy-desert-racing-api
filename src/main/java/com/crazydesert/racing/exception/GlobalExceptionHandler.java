@@ -142,11 +142,59 @@ public class GlobalExceptionHandler {
         return error;
     }
 
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler({
+            DesertLiveItemNotFoundException.class,
+            DesertLiveImageNotFoundException.class
+    })
+    public Map<String, String> handleDesertLiveNotFoundException(
+            RuntimeException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(DesertLiveAccessDeniedException.class)
+    public Map<String, String> handleDesertLiveAccessDeniedException(
+            DesertLiveAccessDeniedException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler({
+            InvalidDesertLiveItemException.class,
+            InvalidImageException.class
+    })
+    public Map<String, String> handleInvalidDesertLiveRequest(
+            RuntimeException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(ImageStorageException.class)
+    public Map<String, String> handleImageStorageException() {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", "Failed to store image");
+
+        return error;
+    }
+
     @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public Map<String, String> handleMaxUploadSizeExceededException() {
         Map<String, String> error = new HashMap<>();
-        error.put("message", "Avatar image must be 2 MB or smaller");
+        error.put("message", "Image must be 2 MB or smaller");
 
         return error;
     }
