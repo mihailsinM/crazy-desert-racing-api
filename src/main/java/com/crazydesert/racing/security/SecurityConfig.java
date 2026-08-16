@@ -53,6 +53,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/races", "/races/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/avatars/*").permitAll()
 
+                        .requestMatchers("/desert-live/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/desert-live/my/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/desert-live").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/desert-live/random").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/desert-live/images/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/desert-live/*").permitAll()
+
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/me/**").authenticated()
 
