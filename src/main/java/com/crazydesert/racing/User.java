@@ -1,6 +1,7 @@
 package com.crazydesert.racing;
 
 import com.crazydesert.racing.enums.Role;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -16,11 +17,25 @@ public class User {
 
     private String name;
     private int age;
+    @Column(nullable = false, unique = true)
     private String email;
 
     private String licenseCategory;
     private boolean licenseVerified;
+    @JsonIgnore
     private String password;
+
+    @JsonIgnore
+    @Basic(fetch = FetchType.LAZY)
+    @Column(name = "avatar_data", columnDefinition = "bytea")
+    private byte[] avatarData;
+
+    @JsonIgnore
+    @Column(name = "avatar_content_type", length = 50)
+    private String avatarContentType;
+
+    @JsonIgnore
+    private Long avatarVersion;
 
     @Enumerated(EnumType.STRING)
     private Role role;
@@ -57,6 +72,18 @@ public class User {
         return password;
     }
 
+    public byte[] getAvatarData() {
+        return avatarData;
+    }
+
+    public String getAvatarContentType() {
+        return avatarContentType;
+    }
+
+    public long getAvatarVersion() {
+        return avatarVersion == null ? 0L : avatarVersion;
+    }
+
     public Role getRole() {
         return role;
     }
@@ -87,6 +114,18 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public void setAvatarData(byte[] avatarData) {
+        this.avatarData = avatarData;
+    }
+
+    public void setAvatarContentType(String avatarContentType) {
+        this.avatarContentType = avatarContentType;
+    }
+
+    public void setAvatarVersion(long avatarVersion) {
+        this.avatarVersion = avatarVersion;
     }
 
     public void setRole(Role role) {

@@ -1,6 +1,7 @@
 package com.crazydesert.racing.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -95,6 +96,57 @@ public class GlobalExceptionHandler {
 
         Map<String, String> error = new HashMap<>();
         error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(EmailAlreadyInUseException.class)
+    public Map<String, String> handleEmailAlreadyInUseException(
+            EmailAlreadyInUseException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidAvatarException.class)
+    public Map<String, String> handleInvalidAvatarException(
+            InvalidAvatarException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ExceptionHandler(AvatarNotFoundException.class)
+    public Map<String, String> handleAvatarNotFoundException(
+            AvatarNotFoundException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(AvatarStorageException.class)
+    public Map<String, String> handleAvatarStorageException() {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", "Failed to store avatar image");
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.PAYLOAD_TOO_LARGE)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public Map<String, String> handleMaxUploadSizeExceededException() {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", "Avatar image must be 2 MB or smaller");
 
         return error;
     }

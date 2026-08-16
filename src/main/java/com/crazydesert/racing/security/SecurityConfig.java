@@ -51,8 +51,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/races", "/races/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/avatars/*").permitAll()
 
                         .requestMatchers("/users/me").authenticated()
+                        .requestMatchers("/users/me/**").authenticated()
 
                         .requestMatchers("/users/*/make-admin").hasRole("ADMIN")
                         .requestMatchers("/users/*/verify-license").hasRole("ADMIN")
