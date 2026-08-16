@@ -1,14 +1,21 @@
 package com.crazydesert.racing.controller;
 
 import com.crazydesert.racing.RaceCar;
+import com.crazydesert.racing.dto.UserAvatarResponse;
 import com.crazydesert.racing.dto.UserCreateRequest;
+import com.crazydesert.racing.dto.UserProfileUpdateRequest;
 import com.crazydesert.racing.dto.UserResponse;
 import com.crazydesert.racing.dto.UserUpdateRequest;
 import com.crazydesert.racing.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
 import java.util.List;
 
 
@@ -77,5 +84,50 @@ public class UserController {
         return userService.getCurrentUser(email);
     }
 
-}
+    @PutMapping("/users/me")
+    public UserResponse updateCurrentUser(
+            Authentication authentication,
+            @Valid @RequestBody UserProfileUpdateRequest request) {
 
+        return userService.updateCurrentUser(
+                authentication.getName(),
+                request
+        );
+    }
+
+    @PutMapping(
+            value = "/users/me/avatar",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public UserResponse updateCurrentUserAvatar(
+            Authentication authentication,
+            @RequestParam("file") MultipartFile avatar) {
+
+        return userService.updateCurrentUserAvatar(
+                authentication.getName(),
+                avatar
+        );
+    }
+
+    @DeleteMapping("/users/me/avatar")
+    public UserResponse deleteCurrentUserAvatar(
+            Authentication authentication) {
+
+        return userService.deleteCurrentUserAvatar(
+                authentication.getName()
+        );
+    }
+
+    @GetMapping("/avatars/{userId}")
+    public ResponseEntity<byte[]> getUserAvatar(@PathVariable Long userId) {
+        UserAvatarResponse avatar = userService.getUserAvatar(userId);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(avatar.contentType()))
+                .cacheControl(
+                        CacheControl.maxAge(Duration.ofDays(30)).cachePublic()
+                )
+                .body(avatar.data());
+    }
+
+}

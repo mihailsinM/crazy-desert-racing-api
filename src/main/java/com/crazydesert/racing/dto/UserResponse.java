@@ -17,4 +17,6 @@ public class UserResponse {
     public boolean licenseVerified;
 
     public Role role;
+
+    public String avatarUrl;
 }
