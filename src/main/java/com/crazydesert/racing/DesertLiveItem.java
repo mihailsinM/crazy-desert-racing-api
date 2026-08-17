@@ -39,6 +39,8 @@ import java.time.Instant;
 )
 public class DesertLiveItem {
 
+    private static final int DEFAULT_IMAGE_FOCUS = 50;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -89,6 +91,12 @@ public class DesertLiveItem {
 
     @Column(name = "image_version")
     private Long imageVersion;
+
+    @Column(name = "image_focus_x")
+    private Integer imageFocusX;
+
+    @Column(name = "image_focus_y")
+    private Integer imageFocusY;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -174,6 +182,18 @@ public class DesertLiveItem {
         return imageVersion == null ? 0L : imageVersion;
     }
 
+    public int getImageFocusX() {
+        return imageFocusX == null
+                ? DEFAULT_IMAGE_FOCUS
+                : imageFocusX;
+    }
+
+    public int getImageFocusY() {
+        return imageFocusY == null
+                ? DEFAULT_IMAGE_FOCUS
+                : imageFocusY;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -240,6 +260,14 @@ public class DesertLiveItem {
 
     public void setImageVersion(long imageVersion) {
         this.imageVersion = imageVersion;
+    }
+
+    public void setImageFocusX(int imageFocusX) {
+        this.imageFocusX = imageFocusX;
+    }
+
+    public void setImageFocusY(int imageFocusY) {
+        this.imageFocusY = imageFocusY;
     }
 
     public void setCreatedAt(Instant createdAt) {

@@ -4,6 +4,7 @@ import com.crazydesert.racing.dto.DesertLiveCreateRequest;
 import com.crazydesert.racing.dto.DesertLiveItemResponse;
 import com.crazydesert.racing.dto.DesertLivePageResponse;
 import com.crazydesert.racing.dto.DesertLiveUpdateRequest;
+import com.crazydesert.racing.dto.ImageFocusRequest;
 import com.crazydesert.racing.enums.DesertLiveCategory;
 import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.service.DesertLiveCommandService;
@@ -109,12 +110,30 @@ public class DesertLiveUserController {
     public DesertLiveItemResponse updateMyItemImage(
             Authentication authentication,
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile image) {
+            @RequestParam("file") MultipartFile image,
+            @RequestParam(defaultValue = "50") int focusX,
+            @RequestParam(defaultValue = "50") int focusY) {
 
         return commandService.updateMyItemImage(
                 authentication.getName(),
                 id,
-                image
+                image,
+                focusX,
+                focusY
+        );
+    }
+
+    @PutMapping("/{id}/image/focus")
+    public DesertLiveItemResponse updateMyItemImageFocus(
+            Authentication authentication,
+            @PathVariable Long id,
+            @Valid @RequestBody ImageFocusRequest request) {
+
+        return commandService.updateMyItemImageFocus(
+                authentication.getName(),
+                id,
+                request.focusX,
+                request.focusY
         );
     }
 

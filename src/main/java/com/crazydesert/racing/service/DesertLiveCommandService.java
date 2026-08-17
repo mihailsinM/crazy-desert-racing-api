@@ -10,6 +10,7 @@ import com.crazydesert.racing.enums.DesertLiveSource;
 import com.crazydesert.racing.exception.DesertLiveAccessDeniedException;
 import com.crazydesert.racing.exception.DesertLiveItemNotFoundException;
 import com.crazydesert.racing.exception.InvalidDesertLiveItemException;
+import com.crazydesert.racing.exception.InvalidImageFocusException;
 import com.crazydesert.racing.exception.UserNotFoundException;
 import com.crazydesert.racing.repository.DesertLiveItemRepository;
 import com.crazydesert.racing.repository.UserRepository;
@@ -30,17 +31,20 @@ public class DesertLiveCommandService {
     private final DesertLiveItemRepository itemRepository;
     private final UserRepository userRepository;
     private final DesertLiveImageService imageService;
+    private final ImageFocusValidator imageFocusValidator;
     private final DesertLiveMapper mapper;
 
     public DesertLiveCommandService(
             DesertLiveItemRepository itemRepository,
             UserRepository userRepository,
             DesertLiveImageService imageService,
+            ImageFocusValidator imageFocusValidator,
             DesertLiveMapper mapper) {
 
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
         this.imageService = imageService;
+        this.imageFocusValidator = imageFocusValidator;
         this.mapper = mapper;
     }
 
@@ -83,11 +87,15 @@ public class DesertLiveCommandService {
     public DesertLiveItemResponse updateMyItemImage(
             String currentEmail,
             Long id,
-            MultipartFile image) {
+            MultipartFile image,
+            int focusX,
+            int focusY) {
 
         DesertLiveItem item = getOwnedUserItem(id, currentEmail);
 
+        imageFocusValidator.validate(focusX, focusY);
         imageService.storeImage(item, image);
+        applyImageFocus(item, focusX, focusY);
         resetUserItemToPending(item);
 
         return mapper.toResponse(itemRepository.save(item));
@@ -100,6 +108,7 @@ public class DesertLiveCommandService {
         DesertLiveItem item = getOwnedUserItem(id, currentEmail);
 
         imageService.deleteImage(item);
+        resetImageFocus(item);
         resetUserItemToPending(item);
 
         return mapper.toResponse(itemRepository.save(item));
@@ -174,10 +183,15 @@ public class DesertLiveCommandService {
 
     public DesertLiveItemResponse updateAdminItemImage(
             Long id,
-            MultipartFile image) {
+            MultipartFile image,
+            int focusX,
+            int focusY) {
 
         DesertLiveItem item = getItem(id);
+
+        imageFocusValidator.validate(focusX, focusY);
         imageService.storeImage(item, image);
+        applyImageFocus(item, focusX, focusY);
 
         return mapper.toResponse(itemRepository.save(item));
     }
@@ -185,6 +199,32 @@ public class DesertLiveCommandService {
     public DesertLiveItemResponse deleteAdminItemImage(Long id) {
         DesertLiveItem item = getItem(id);
         imageService.deleteImage(item);
+        resetImageFocus(item);
+
+        return mapper.toResponse(itemRepository.save(item));
+    }
+
+    public DesertLiveItemResponse updateMyItemImageFocus(
+            String currentEmail,
+            Long id,
+            int focusX,
+            int focusY) {
+
+        DesertLiveItem item = getOwnedUserItem(id, currentEmail);
+
+        updateImageFocus(item, focusX, focusY);
+
+        return mapper.toResponse(itemRepository.save(item));
+    }
+
+    public DesertLiveItemResponse updateAdminItemImageFocus(
+            Long id,
+            int focusX,
+            int focusY) {
+
+        DesertLiveItem item = getItem(id);
+
+        updateImageFocus(item, focusX, focusY);
 
         return mapper.toResponse(itemRepository.save(item));
     }
@@ -273,6 +313,38 @@ public class DesertLiveCommandService {
         item.setModerationNote(null);
         item.setModeratedByUserId(null);
         item.setModeratedAt(null);
+    }
+
+    private void updateImageFocus(
+            DesertLiveItem item,
+            int focusX,
+            int focusY) {
+
+        if (item.getImageKey() == null) {
+            throw new InvalidImageFocusException(
+                    "Upload an image before setting its focus point"
+            );
+        }
+
+        imageFocusValidator.validate(focusX, focusY);
+        applyImageFocus(item, focusX, focusY);
+    }
+
+    private void applyImageFocus(
+            DesertLiveItem item,
+            int focusX,
+            int focusY) {
+
+        item.setImageFocusX(focusX);
+        item.setImageFocusY(focusY);
+    }
+
+    private void resetImageFocus(DesertLiveItem item) {
+        applyImageFocus(
+                item,
+                ImageFocusValidator.DEFAULT_FOCUS,
+                ImageFocusValidator.DEFAULT_FOCUS
+        );
     }
 
     private DesertLiveItem getOwnedUserItem(

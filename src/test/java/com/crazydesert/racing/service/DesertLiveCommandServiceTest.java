@@ -10,6 +10,7 @@ import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.enums.DesertLiveSource;
 import com.crazydesert.racing.enums.Role;
 import com.crazydesert.racing.exception.InvalidDesertLiveItemException;
+import com.crazydesert.racing.exception.InvalidImageFocusException;
 import com.crazydesert.racing.repository.DesertLiveItemRepository;
 import com.crazydesert.racing.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,6 +52,7 @@ class DesertLiveCommandServiceTest {
                 itemRepository,
                 userRepository,
                 imageService,
+                new ImageFocusValidator(),
                 new DesertLiveMapper()
         );
     }
@@ -171,14 +173,114 @@ class DesertLiveCommandServiceTest {
                 commandService.updateMyItemImage(
                         "author@example.com",
                         10L,
-                        image
+                        image,
+                        25,
+                        70
                 );
 
         verify(imageService).storeImage(item, image);
+        assertEquals(25, response.imageFocusX());
+        assertEquals(70, response.imageFocusY());
         assertEquals(
                 DesertLiveModerationStatus.PENDING,
                 response.moderationStatus()
         );
+    }
+
+    @Test
+    void changesFocusWithoutReturningApprovedItemToPending() {
+        User author = createUser(1L, "author@example.com", Role.USER);
+        DesertLiveItem item = createItem(
+                10L,
+                author,
+                DesertLiveModerationStatus.APPROVED
+        );
+        item.setImageKey("image-key");
+
+        when(userRepository.findByEmail("author@example.com"))
+                .thenReturn(Optional.of(author));
+        when(itemRepository.findById(10L)).thenReturn(Optional.of(item));
+        when(itemRepository.save(item)).thenReturn(item);
+
+        DesertLiveItemResponse response =
+                commandService.updateMyItemImageFocus(
+                        "author@example.com",
+                        10L,
+                        20,
+                        80
+                );
+
+        assertEquals(20, response.imageFocusX());
+        assertEquals(80, response.imageFocusY());
+        assertEquals(
+                DesertLiveModerationStatus.APPROVED,
+                response.moderationStatus()
+        );
+    }
+
+    @Test
+    void rejectsFocusOutsideImageBounds() {
+        User author = createUser(1L, "author@example.com", Role.USER);
+        DesertLiveItem item = createItem(
+                10L,
+                author,
+                DesertLiveModerationStatus.APPROVED
+        );
+        item.setImageKey("image-key");
+
+        when(userRepository.findByEmail("author@example.com"))
+                .thenReturn(Optional.of(author));
+        when(itemRepository.findById(10L)).thenReturn(Optional.of(item));
+
+        assertThrows(
+                InvalidImageFocusException.class,
+                () -> commandService.updateMyItemImageFocus(
+                        "author@example.com",
+                        10L,
+                        -1,
+                        101
+                )
+        );
+    }
+
+    @Test
+    void rejectsFocusUpdateWhenItemHasNoImage() {
+        User author = createUser(1L, "author@example.com", Role.USER);
+        DesertLiveItem item = createItem(
+                10L,
+                author,
+                DesertLiveModerationStatus.APPROVED
+        );
+
+        when(userRepository.findByEmail("author@example.com"))
+                .thenReturn(Optional.of(author));
+        when(itemRepository.findById(10L)).thenReturn(Optional.of(item));
+
+        assertThrows(
+                InvalidImageFocusException.class,
+                () -> commandService.updateMyItemImageFocus(
+                        "author@example.com",
+                        10L,
+                        40,
+                        60
+                )
+        );
+    }
+
+    @Test
+    void returnsCenteredFocusForExistingItemsWithoutCoordinates() {
+        User author = createUser(1L, "author@example.com", Role.USER);
+        DesertLiveItem item = createItem(
+                10L,
+                author,
+                DesertLiveModerationStatus.APPROVED
+        );
+
+        DesertLiveItemResponse response =
+                new DesertLiveMapper().toResponse(item);
+
+        assertEquals(50, response.imageFocusX());
+        assertEquals(50, response.imageFocusY());
     }
 
     @Test

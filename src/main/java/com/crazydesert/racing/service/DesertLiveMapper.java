@@ -41,6 +41,8 @@ public class DesertLiveMapper {
                 item.getActiveUntil(),
                 item.getCreatedAt(),
                 item.getUpdatedAt(),
+                item.getImageFocusX(),
+                item.getImageFocusY(),
                 buildItemImageUrl(item)
         );
     }
