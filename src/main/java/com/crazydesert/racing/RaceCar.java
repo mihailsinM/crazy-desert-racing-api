@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 @Table(name = "race_cars")
 public class RaceCar {
 
+    private static final int DEFAULT_IMAGE_FOCUS = 50;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -16,6 +18,12 @@ public class RaceCar {
     private int horsePower;
     private String imageUrl;
     private String imagePosition = "CENTER";
+
+    @Column(name = "image_focus_x")
+    private Integer imageFocusX = DEFAULT_IMAGE_FOCUS;
+
+    @Column(name = "image_focus_y")
+    private Integer imageFocusY = DEFAULT_IMAGE_FOCUS;
 
     @ManyToOne
     @JsonBackReference
@@ -46,6 +54,18 @@ public class RaceCar {
         return imagePosition;
     }
 
+    public int getImageFocusX() {
+        return imageFocusX == null
+                ? DEFAULT_IMAGE_FOCUS
+                : imageFocusX;
+    }
+
+    public int getImageFocusY() {
+        return imageFocusY == null
+                ? DEFAULT_IMAGE_FOCUS
+                : imageFocusY;
+    }
+
     public User getOwner() {
         return owner;
     }
@@ -68,6 +88,14 @@ public class RaceCar {
 
     public void setImagePosition(String imagePosition) {
         this.imagePosition = imagePosition;
+    }
+
+    public void setImageFocusX(int imageFocusX) {
+        this.imageFocusX = imageFocusX;
+    }
+
+    public void setImageFocusY(int imageFocusY) {
+        this.imageFocusY = imageFocusY;
     }
 
     public void setOwner(User owner) {
