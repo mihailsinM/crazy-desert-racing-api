@@ -22,6 +22,8 @@ public record DesertLiveItemResponse(
         Instant activeUntil,
         Instant createdAt,
         Instant updatedAt,
+        int imageFocusX,
+        int imageFocusY,
         String imageUrl
 ) {
 }

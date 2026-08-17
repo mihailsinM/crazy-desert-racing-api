@@ -170,6 +170,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({
             InvalidDesertLiveItemException.class,
+            InvalidImageFocusException.class,
             InvalidImageException.class
     })
     public Map<String, String> handleInvalidDesertLiveRequest(
