@@ -20,10 +20,15 @@ public class RaceCarService {
 
     private final RaceCarRepository raceCarRepository;
     private final UserRepository userRepository;
+    private final ImageFocusValidator imageFocusValidator;
 
-    public RaceCarService(RaceCarRepository raceCarRepository, UserRepository userRepository) {
+    public RaceCarService(
+            RaceCarRepository raceCarRepository,
+            UserRepository userRepository,
+            ImageFocusValidator imageFocusValidator) {
         this.raceCarRepository = raceCarRepository;
         this.userRepository = userRepository;
+        this.imageFocusValidator = imageFocusValidator;
     }
 
     public RaceCar assignCarToUser(Long userId, Long raceCarId) {
@@ -63,15 +68,7 @@ public class RaceCarService {
 
         RaceCar raceCar = new RaceCar();
 
-        raceCar.setName(request.name);
-        raceCar.setBrand(request.brand);
-        raceCar.setHorsePower(request.horsePower);
-        raceCar.setImageUrl(request.imageUrl);
-        raceCar.setImagePosition(
-                request.imagePosition == null || request.imagePosition.isBlank()
-                        ? "CENTER"
-                        : request.imagePosition
-        );
+        applyCreateRequest(raceCar, request);
 
         return raceCarRepository.save(raceCar);
     }
@@ -104,6 +101,11 @@ public class RaceCarService {
         existingRaceCar.setImageUrl(request.imageUrl);
         existingRaceCar.setImagePosition(request.imagePosition);
 
+        applyImageFocusForUpdate(
+                existingRaceCar,
+                request.imageFocusX,
+                request.imageFocusY
+        );
         return raceCarRepository.save(existingRaceCar);
     }
 
@@ -116,15 +118,7 @@ public class RaceCarService {
 
         RaceCar raceCar = new RaceCar();
 
-        raceCar.setName(request.name);
-        raceCar.setBrand(request.brand);
-        raceCar.setHorsePower(request.horsePower);
-        raceCar.setImageUrl(request.imageUrl);
-        raceCar.setImagePosition(
-                request.imagePosition == null || request.imagePosition.isBlank()
-                        ? "CENTER"
-                        : request.imagePosition
-        );
+        applyCreateRequest(raceCar, request);
 
         raceCar.setOwner(user);
 
@@ -163,5 +157,62 @@ public class RaceCarService {
                     "You can manage only your own race cars"
             );
         }
+    }
+
+    private void applyCreateRequest(
+            RaceCar raceCar,
+            RaceCarCreateRequest request) {
+
+        raceCar.setName(request.name);
+        raceCar.setBrand(request.brand);
+        raceCar.setHorsePower(request.horsePower);
+        raceCar.setImageUrl(request.imageUrl);
+        raceCar.setImagePosition(
+                request.imagePosition == null || request.imagePosition.isBlank()
+                        ? "CENTER"
+                        : request.imagePosition
+        );
+
+        applyImageFocusForCreate(
+                raceCar,
+                request.imageFocusX,
+                request.imageFocusY
+        );
+    }
+
+    private void applyImageFocusForCreate(
+            RaceCar raceCar,
+            Integer focusX,
+            Integer focusY) {
+
+        if (focusX == null && focusY == null) {
+            raceCar.setImageFocusX(ImageFocusValidator.DEFAULT_FOCUS);
+            raceCar.setImageFocusY(ImageFocusValidator.DEFAULT_FOCUS);
+            return;
+        }
+
+        validateAndApplyImageFocus(raceCar, focusX, focusY);
+    }
+
+    private void applyImageFocusForUpdate(
+            RaceCar raceCar,
+            Integer focusX,
+            Integer focusY) {
+
+        if (focusX == null && focusY == null) {
+            return;
+        }
+
+        validateAndApplyImageFocus(raceCar, focusX, focusY);
+    }
+
+    private void validateAndApplyImageFocus(
+            RaceCar raceCar,
+            Integer focusX,
+            Integer focusY) {
+
+        imageFocusValidator.validate(focusX, focusY);
+        raceCar.setImageFocusX(focusX);
+        raceCar.setImageFocusY(focusY);
     }
 }

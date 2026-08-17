@@ -18,4 +18,7 @@ public class RaceCarCreateRequest {
     public String imageUrl;
 
     public String imagePosition;
+
+    public Integer imageFocusX;
+    public Integer imageFocusY;
 }
