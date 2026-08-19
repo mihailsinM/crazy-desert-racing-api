@@ -14,11 +14,11 @@ public class RaceCarCreateRequest {
     @Min(value = 1, message = "Horse power must be at least 1")
     public int horsePower;
 
-    @NotBlank(message = "Image URL must not be blank")
     public String imageUrl;
 
     public String imagePosition;
 
     public Integer imageFocusX;
     public Integer imageFocusY;
+    public Integer imageCropPercent;
 }

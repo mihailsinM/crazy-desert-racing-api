@@ -145,7 +145,8 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler({
             DesertLiveItemNotFoundException.class,
-            DesertLiveImageNotFoundException.class
+            DesertLiveImageNotFoundException.class,
+            MediaImageNotFoundException.class
     })
     public Map<String, String> handleDesertLiveNotFoundException(
             RuntimeException ex) {
@@ -171,6 +172,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             InvalidDesertLiveItemException.class,
             InvalidImageFocusException.class,
+            InvalidImageFramingException.class,
             InvalidImageException.class
     })
     public Map<String, String> handleInvalidDesertLiveRequest(

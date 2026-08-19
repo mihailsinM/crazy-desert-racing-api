@@ -52,6 +52,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers(HttpMethod.GET, "/races", "/races/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/avatars/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/media/images/*").permitAll()
 
                         .requestMatchers("/desert-live/admin/**").hasRole("ADMIN")
                         .requestMatchers("/desert-live/my/**").authenticated()
