@@ -1,12 +1,15 @@
 package com.crazydesert.racing.controller;
 
 import com.crazydesert.racing.RaceCar;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
 import com.crazydesert.racing.dto.RaceCarUpdateRequest;
 import com.crazydesert.racing.service.RaceCarService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -70,6 +73,54 @@ public class RaceCarController {
 
         raceCarService.deleteRaceCarById(authentication.getName(), id);
         return "Race car deleted with id: " + id;
+    }
+
+    @PutMapping(
+            value = "/{id}/image",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public RaceCar updateRaceCarImage(
+            @PathVariable Long id,
+            Authentication authentication,
+            @RequestParam("file") MultipartFile image,
+            @RequestParam(defaultValue = "50") Integer focusX,
+            @RequestParam(defaultValue = "50") Integer focusY,
+            @RequestParam(defaultValue = "0") Integer cropPercent) {
+
+        return raceCarService.updateRaceCarImage(
+                authentication.getName(),
+                id,
+                image,
+                focusX,
+                focusY,
+                cropPercent
+        );
+    }
+
+    @PutMapping("/{id}/image/framing")
+    public RaceCar updateRaceCarImageFraming(
+            @PathVariable Long id,
+            Authentication authentication,
+            @RequestBody ImageFramingRequest request) {
+
+        return raceCarService.updateRaceCarImageFraming(
+                authentication.getName(),
+                id,
+                request.focusX,
+                request.focusY,
+                request.cropPercent
+        );
+    }
+
+    @DeleteMapping("/{id}/image")
+    public RaceCar deleteRaceCarImage(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        return raceCarService.deleteRaceCarImage(
+                authentication.getName(),
+                id
+        );
     }
 
     @PostMapping("/{raceCarId}/owner/{userId}")

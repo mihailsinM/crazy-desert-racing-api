@@ -1,13 +1,12 @@
 package com.crazydesert.racing;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "race_cars")
 public class RaceCar {
-
-    private static final int DEFAULT_IMAGE_FOCUS = 50;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,11 +18,14 @@ public class RaceCar {
     private String imageUrl;
     private String imagePosition = "CENTER";
 
-    @Column(name = "image_focus_x")
-    private Integer imageFocusX = DEFAULT_IMAGE_FOCUS;
+    @Embedded
+    private ImageFraming imageFraming = new ImageFraming();
 
-    @Column(name = "image_focus_y")
-    private Integer imageFocusY = DEFAULT_IMAGE_FOCUS;
+    @Column(name = "image_key", unique = true, length = 36)
+    private String imageKey;
+
+    @Column(name = "image_version")
+    private Long imageVersion;
 
     @ManyToOne
     @JsonBackReference
@@ -47,6 +49,13 @@ public class RaceCar {
     }
 
     public String getImageUrl() {
+        if (imageKey != null) {
+            return "/media/images/"
+                    + imageKey
+                    + "?v="
+                    + getImageVersion();
+        }
+
         return imageUrl;
     }
 
@@ -55,15 +64,25 @@ public class RaceCar {
     }
 
     public int getImageFocusX() {
-        return imageFocusX == null
-                ? DEFAULT_IMAGE_FOCUS
-                : imageFocusX;
+        return getOrCreateImageFraming().getFocusX();
     }
 
     public int getImageFocusY() {
-        return imageFocusY == null
-                ? DEFAULT_IMAGE_FOCUS
-                : imageFocusY;
+        return getOrCreateImageFraming().getFocusY();
+    }
+
+    public int getImageCropPercent() {
+        return getOrCreateImageFraming().getCropPercent();
+    }
+
+    @JsonIgnore
+    public String getImageKey() {
+        return imageKey;
+    }
+
+    @JsonIgnore
+    public long getImageVersion() {
+        return imageVersion == null ? 0L : imageVersion;
     }
 
     public User getOwner() {
@@ -91,14 +110,40 @@ public class RaceCar {
     }
 
     public void setImageFocusX(int imageFocusX) {
-        this.imageFocusX = imageFocusX;
+        getOrCreateImageFraming().setFocusX(imageFocusX);
     }
 
     public void setImageFocusY(int imageFocusY) {
-        this.imageFocusY = imageFocusY;
+        getOrCreateImageFraming().setFocusY(imageFocusY);
+    }
+
+    public void setImageCropPercent(int imageCropPercent) {
+        getOrCreateImageFraming().setCropPercent(imageCropPercent);
+    }
+
+    public void setImageKey(String imageKey) {
+        this.imageKey = imageKey;
+    }
+
+    public void setImageVersion(long imageVersion) {
+        this.imageVersion = imageVersion;
     }
 
     public void setOwner(User owner) {
         this.owner = owner;
+    }
+
+    @JsonIgnore
+    public boolean hasImage() {
+        return imageKey != null
+                || (imageUrl != null && !imageUrl.isBlank());
+    }
+
+    private ImageFraming getOrCreateImageFraming() {
+        if (imageFraming == null) {
+            imageFraming = new ImageFraming();
+        }
+
+        return imageFraming;
     }
 }
