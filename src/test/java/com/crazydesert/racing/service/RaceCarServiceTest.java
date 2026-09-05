@@ -1,8 +1,11 @@
 package com.crazydesert.racing.service;
 
+import com.crazydesert.racing.ImageFraming;
 import com.crazydesert.racing.MediaImage;
 import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
+import com.crazydesert.racing.dto.ImageFramingProfileRequest;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
 import com.crazydesert.racing.dto.RaceCarUpdateRequest;
 import com.crazydesert.racing.enums.MediaImageVisibility;
@@ -67,6 +70,7 @@ class RaceCarServiceTest {
         assertEquals(50, savedRaceCar.getImageFocusX());
         assertEquals(50, savedRaceCar.getImageFocusY());
         assertEquals(0, savedRaceCar.getImageCropPercent());
+        assertFraming(savedRaceCar, 50, 50, 0, 50, 50, 0);
     }
 
     @Test
@@ -82,6 +86,7 @@ class RaceCarServiceTest {
         assertEquals(25, savedRaceCar.getImageFocusX());
         assertEquals(75, savedRaceCar.getImageFocusY());
         assertEquals(10, savedRaceCar.getImageCropPercent());
+        assertFraming(savedRaceCar, 25, 75, 10, 25, 75, 10);
     }
 
     @Test
@@ -159,15 +164,43 @@ class RaceCarServiceTest {
     @Test
     void returnsDefaultFramingForLegacyCarWithoutMetadata() {
         RaceCar raceCar = new RaceCar();
-        ReflectionTestUtils.setField(raceCar, "imageFraming", null);
+        ReflectionTestUtils.setField(raceCar, "cardImageFraming", null);
+        ReflectionTestUtils.setField(raceCar, "avatarImageFraming", null);
 
         assertEquals(50, raceCar.getImageFocusX());
         assertEquals(50, raceCar.getImageFocusY());
         assertEquals(0, raceCar.getImageCropPercent());
+        assertFraming(raceCar, 50, 50, 0, 50, 50, 0);
     }
 
     @Test
-    void storesUploadedImageAndAppliesFraming() {
+    void usesLegacyCardFramingAsAvatarFallback() {
+        RaceCar raceCar = new RaceCar();
+        raceCar.applyCardImageFraming(20, 80, 15);
+        ReflectionTestUtils.setField(raceCar, "avatarImageFraming", null);
+
+        assertFraming(raceCar, 20, 80, 15, 20, 80, 15);
+    }
+
+    @Test
+    void usesCardFallbackWhenLegacyAvatarColumnsAreAllNull() {
+        RaceCar raceCar = new RaceCar();
+        raceCar.applyCardImageFraming(30, 70, 10);
+        ImageFraming emptyAvatarFraming = new ImageFraming();
+        ReflectionTestUtils.setField(emptyAvatarFraming, "focusX", null);
+        ReflectionTestUtils.setField(emptyAvatarFraming, "focusY", null);
+        ReflectionTestUtils.setField(emptyAvatarFraming, "cropPercent", null);
+        ReflectionTestUtils.setField(
+                raceCar,
+                "avatarImageFraming",
+                emptyAvatarFraming
+        );
+
+        assertFraming(raceCar, 30, 70, 10, 30, 70, 10);
+    }
+
+    @Test
+    void storesUploadedImageAndAppliesDifferentProfiles() {
         User owner = createUser(1L, "owner@example.com");
         RaceCar raceCar = createRaceCar(owner, 50, 50);
         MockMultipartFile uploadedImage = new MockMultipartFile(
@@ -192,22 +225,90 @@ class RaceCarServiceTest {
                 owner.getEmail(),
                 10L,
                 uploadedImage,
-                20,
-                80,
-                15
+                explicitFraming(
+                        25,
+                        35,
+                        20,
+                        70,
+                        80,
+                        5
+                )
         );
 
         assertEquals(
                 "/media/images/opaque-key?v=123",
                 updatedRaceCar.getImageUrl()
         );
-        assertEquals(20, updatedRaceCar.getImageFocusX());
-        assertEquals(80, updatedRaceCar.getImageFocusY());
-        assertEquals(15, updatedRaceCar.getImageCropPercent());
+        assertFraming(updatedRaceCar, 25, 35, 20, 70, 80, 5);
     }
 
     @Test
-    void updatesFramingWithoutReplacingImage() {
+    void replacesUploadedImageUsingTheExistingMediaImageKey() {
+        User owner = createUser(1L, "owner@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        raceCar.setImageKey("existing-key");
+        MockMultipartFile uploadedImage = new MockMultipartFile(
+                "file",
+                "replacement.webp",
+                "image/webp",
+                new byte[]{4, 5, 6}
+        );
+        MediaImage mediaImage = new MediaImage();
+        mediaImage.setImageKey("existing-key");
+        mediaImage.setImageVersion(456L);
+
+        stubOwnedRaceCar(owner, raceCar);
+        when(mediaImageService.storeImage(
+                "existing-key",
+                uploadedImage,
+                MediaImageVisibility.PUBLIC
+        )).thenReturn(mediaImage);
+
+        RaceCar updatedRaceCar = raceCarService.updateRaceCarImage(
+                owner.getEmail(),
+                10L,
+                uploadedImage,
+                explicitFraming(25, 35, 20, 70, 80, 5)
+        );
+
+        assertEquals(
+                "/media/images/existing-key?v=456",
+                updatedRaceCar.getImageUrl()
+        );
+        verify(mediaImageService).storeImage(
+                "existing-key",
+                uploadedImage,
+                MediaImageVisibility.PUBLIC
+        );
+    }
+
+    @Test
+    void rejectsInvalidUploadFramingBeforeStoringImage() {
+        User owner = createUser(1L, "owner@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        MockMultipartFile uploadedImage = new MockMultipartFile(
+                "file",
+                "car.webp",
+                "image/webp",
+                new byte[]{1, 2, 3}
+        );
+
+        stubRaceCarAccess(owner, raceCar);
+
+        assertThrows(
+                InvalidImageFramingException.class,
+                () -> raceCarService.updateRaceCarImage(
+                        owner.getEmail(),
+                        10L,
+                        uploadedImage,
+                        explicitFraming(25, 35, 12, 70, 80, 5)
+                )
+        );
+        verifyNoInteractions(mediaImageService);
+    }
+
+    @Test
+    void updatesDifferentProfilesWithoutReplacingImage() {
         User owner = createUser(1L, "owner@example.com");
         RaceCar raceCar = createRaceCar(owner, 50, 50);
 
@@ -217,14 +318,109 @@ class RaceCarServiceTest {
                 raceCarService.updateRaceCarImageFraming(
                         owner.getEmail(),
                         10L,
-                        15,
-                        85,
-                        20
+                        explicitFraming(
+                                15,
+                                35,
+                                20,
+                                80,
+                                65,
+                                5
+                        )
                 );
 
-        assertEquals(15, updatedRaceCar.getImageFocusX());
-        assertEquals(85, updatedRaceCar.getImageFocusY());
-        assertEquals(20, updatedRaceCar.getImageCropPercent());
+        assertFraming(updatedRaceCar, 15, 35, 20, 80, 65, 5);
+        verifyNoInteractions(mediaImageService);
+    }
+
+    @Test
+    void keepsLegacyFramingUpdateCompatible() {
+        User owner = createUser(1L, "owner@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        ImageFramingRequest legacyRequest = new ImageFramingRequest();
+        legacyRequest.focusX = 15;
+        legacyRequest.focusY = 85;
+        legacyRequest.cropPercent = 20;
+
+        stubOwnedRaceCar(owner, raceCar);
+
+        RaceCar updatedRaceCar =
+                raceCarService.updateRaceCarImageFraming(
+                        owner.getEmail(),
+                        10L,
+                        legacyRequest
+                );
+
+        assertFraming(updatedRaceCar, 15, 85, 20, 15, 85, 20);
+    }
+
+    @Test
+    void rejectsInvalidAvatarProfile() {
+        User owner = createUser(1L, "owner@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        ImageFramingRequest request = explicitFraming(
+                -1,
+                35,
+                20,
+                80,
+                65,
+                5
+        );
+
+        stubRaceCarAccess(owner, raceCar);
+
+        assertThrows(
+                InvalidImageFocusException.class,
+                () -> raceCarService.updateRaceCarImageFraming(
+                        owner.getEmail(),
+                        10L,
+                        request
+                )
+        );
+    }
+
+    @Test
+    void rejectsInvalidCardProfileWithoutChangingAvatar() {
+        User owner = createUser(1L, "owner@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        ImageFramingRequest request = explicitFraming(
+                15,
+                35,
+                20,
+                80,
+                65,
+                12
+        );
+
+        stubRaceCarAccess(owner, raceCar);
+
+        assertThrows(
+                InvalidImageFramingException.class,
+                () -> raceCarService.updateRaceCarImageFraming(
+                        owner.getEmail(),
+                        10L,
+                        request
+                )
+        );
+        assertFraming(raceCar, 50, 50, 0, 50, 50, 0);
+    }
+
+    @Test
+    void rejectsIncompleteExplicitProfiles() {
+        User owner = createUser(1L, "owner@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        ImageFramingRequest request = new ImageFramingRequest();
+        request.avatar = new ImageFramingProfileRequest(25, 35, 10);
+
+        stubRaceCarAccess(owner, raceCar);
+
+        assertThrows(
+                InvalidImageFramingException.class,
+                () -> raceCarService.updateRaceCarImageFraming(
+                        owner.getEmail(),
+                        10L,
+                        request
+                )
+        );
     }
 
     @Test
@@ -250,9 +446,14 @@ class RaceCarServiceTest {
                         otherUser.getEmail(),
                         10L,
                         uploadedImage,
-                        50,
-                        50,
-                        0
+                        explicitFraming(
+                                50,
+                                50,
+                                0,
+                                50,
+                                50,
+                                0
+                        )
                 )
         );
         verifyNoInteractions(mediaImageService);
@@ -290,14 +491,71 @@ class RaceCarServiceTest {
                 admin.getEmail(),
                 10L,
                 uploadedImage,
-                50,
-                50,
-                0
+                null
         );
 
         assertEquals(
                 "/media/images/admin-upload-key?v=456",
                 updatedRaceCar.getImageUrl()
+        );
+        assertFraming(updatedRaceCar, 50, 50, 0, 50, 50, 0);
+    }
+
+    @Test
+    void allowsAdminToUpdateBothFramingProfiles() {
+        User owner = createUser(1L, "owner@example.com");
+        User admin = createUser(2L, "admin@example.com");
+        admin.setRole(Role.ADMIN);
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+
+        when(userRepository.findByEmail(admin.getEmail()))
+                .thenReturn(Optional.of(admin));
+        when(raceCarRepository.findById(10L))
+                .thenReturn(Optional.of(raceCar));
+        when(raceCarRepository.save(raceCar)).thenReturn(raceCar);
+
+        RaceCar updatedRaceCar =
+                raceCarService.updateRaceCarImageFraming(
+                        admin.getEmail(),
+                        10L,
+                        explicitFraming(
+                                25,
+                                40,
+                                15,
+                                75,
+                                60,
+                                5
+                        )
+                );
+
+        assertFraming(updatedRaceCar, 25, 40, 15, 75, 60, 5);
+    }
+
+    @Test
+    void rejectsFramingUpdateFromAnotherUser() {
+        User owner = createUser(1L, "owner@example.com");
+        User otherUser = createUser(2L, "other@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+
+        when(userRepository.findByEmail(otherUser.getEmail()))
+                .thenReturn(Optional.of(otherUser));
+        when(raceCarRepository.findById(10L))
+                .thenReturn(Optional.of(raceCar));
+
+        assertThrows(
+                RaceCarOwnershipException.class,
+                () -> raceCarService.updateRaceCarImageFraming(
+                        otherUser.getEmail(),
+                        10L,
+                        explicitFraming(
+                                25,
+                                40,
+                                15,
+                                75,
+                                60,
+                                5
+                        )
+                )
         );
     }
 
@@ -325,6 +583,7 @@ class RaceCarServiceTest {
         assertEquals(50, updatedRaceCar.getImageFocusX());
         assertEquals(50, updatedRaceCar.getImageFocusY());
         assertEquals(0, updatedRaceCar.getImageCropPercent());
+        assertFraming(updatedRaceCar, 50, 50, 0, 50, 50, 0);
         verify(mediaImageService).deleteImage("stored-image-key");
     }
 
@@ -381,16 +640,78 @@ class RaceCarServiceTest {
         return raceCar;
     }
 
+    private ImageFramingRequest explicitFraming(
+            int avatarFocusX,
+            int avatarFocusY,
+            int avatarCropPercent,
+            int cardFocusX,
+            int cardFocusY,
+            int cardCropPercent) {
+
+        ImageFramingRequest request = new ImageFramingRequest();
+        request.avatar = new ImageFramingProfileRequest(
+                avatarFocusX,
+                avatarFocusY,
+                avatarCropPercent
+        );
+        request.card = new ImageFramingProfileRequest(
+                cardFocusX,
+                cardFocusY,
+                cardCropPercent
+        );
+
+        return request;
+    }
+
+    private void assertFraming(
+            RaceCar raceCar,
+            int avatarFocusX,
+            int avatarFocusY,
+            int avatarCropPercent,
+            int cardFocusX,
+            int cardFocusY,
+            int cardCropPercent) {
+
+        assertEquals(
+                avatarFocusX,
+                raceCar.getImageFraming().avatar().focusX()
+        );
+        assertEquals(
+                avatarFocusY,
+                raceCar.getImageFraming().avatar().focusY()
+        );
+        assertEquals(
+                avatarCropPercent,
+                raceCar.getImageFraming().avatar().cropPercent()
+        );
+        assertEquals(
+                cardFocusX,
+                raceCar.getImageFraming().card().focusX()
+        );
+        assertEquals(
+                cardFocusY,
+                raceCar.getImageFraming().card().focusY()
+        );
+        assertEquals(
+                cardCropPercent,
+                raceCar.getImageFraming().card().cropPercent()
+        );
+    }
+
     private void stubRaceCarSave() {
         when(raceCarRepository.save(any(RaceCar.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     private void stubOwnedRaceCar(User owner, RaceCar raceCar) {
+        stubRaceCarAccess(owner, raceCar);
+        when(raceCarRepository.save(raceCar)).thenReturn(raceCar);
+    }
+
+    private void stubRaceCarAccess(User owner, RaceCar raceCar) {
         when(userRepository.findByEmail(owner.getEmail()))
                 .thenReturn(Optional.of(owner));
         when(raceCarRepository.findById(10L))
                 .thenReturn(Optional.of(raceCar));
-        when(raceCarRepository.save(raceCar)).thenReturn(raceCar);
     }
 }

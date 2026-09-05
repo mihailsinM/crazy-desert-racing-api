@@ -1,5 +1,7 @@
 package com.crazydesert.racing;
 
+import com.crazydesert.racing.dto.ImageFramingProfilesResponse;
+import com.crazydesert.racing.dto.ImageFramingResponse;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
@@ -19,7 +21,38 @@ public class RaceCar {
     private String imagePosition = "CENTER";
 
     @Embedded
-    private ImageFraming imageFraming = new ImageFraming();
+    @AttributeOverrides({
+            @AttributeOverride(
+                    name = "focusX",
+                    column = @Column(name = "image_focus_x")
+            ),
+            @AttributeOverride(
+                    name = "focusY",
+                    column = @Column(name = "image_focus_y")
+            ),
+            @AttributeOverride(
+                    name = "cropPercent",
+                    column = @Column(name = "image_crop_percent")
+            )
+    })
+    private ImageFraming cardImageFraming = new ImageFraming();
+
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(
+                    name = "focusX",
+                    column = @Column(name = "avatar_image_focus_x")
+            ),
+            @AttributeOverride(
+                    name = "focusY",
+                    column = @Column(name = "avatar_image_focus_y")
+            ),
+            @AttributeOverride(
+                    name = "cropPercent",
+                    column = @Column(name = "avatar_image_crop_percent")
+            )
+    })
+    private ImageFraming avatarImageFraming = new ImageFraming();
 
     @Column(name = "image_key", unique = true, length = 36)
     private String imageKey;
@@ -63,16 +96,26 @@ public class RaceCar {
         return imagePosition;
     }
 
+    public ImageFramingProfilesResponse getImageFraming() {
+        ImageFraming card = getOrCreateCardImageFraming();
+        ImageFraming avatar = getEffectiveAvatarImageFraming(card);
+
+        return new ImageFramingProfilesResponse(
+                ImageFramingResponse.from(avatar),
+                ImageFramingResponse.from(card)
+        );
+    }
+
     public int getImageFocusX() {
-        return getOrCreateImageFraming().getFocusX();
+        return getOrCreateCardImageFraming().getFocusX();
     }
 
     public int getImageFocusY() {
-        return getOrCreateImageFraming().getFocusY();
+        return getOrCreateCardImageFraming().getFocusY();
     }
 
     public int getImageCropPercent() {
-        return getOrCreateImageFraming().getCropPercent();
+        return getOrCreateCardImageFraming().getCropPercent();
     }
 
     @JsonIgnore
@@ -110,15 +153,37 @@ public class RaceCar {
     }
 
     public void setImageFocusX(int imageFocusX) {
-        getOrCreateImageFraming().setFocusX(imageFocusX);
+        getOrCreateCardImageFraming().setFocusX(imageFocusX);
     }
 
     public void setImageFocusY(int imageFocusY) {
-        getOrCreateImageFraming().setFocusY(imageFocusY);
+        getOrCreateCardImageFraming().setFocusY(imageFocusY);
     }
 
     public void setImageCropPercent(int imageCropPercent) {
-        getOrCreateImageFraming().setCropPercent(imageCropPercent);
+        getOrCreateCardImageFraming().setCropPercent(imageCropPercent);
+    }
+
+    public void applyCardImageFraming(
+            int focusX,
+            int focusY,
+            int cropPercent) {
+
+        ImageFraming framing = getOrCreateCardImageFraming();
+        framing.setFocusX(focusX);
+        framing.setFocusY(focusY);
+        framing.setCropPercent(cropPercent);
+    }
+
+    public void applyAvatarImageFraming(
+            int focusX,
+            int focusY,
+            int cropPercent) {
+
+        ImageFraming framing = getOrCreateAvatarImageFraming();
+        framing.setFocusX(focusX);
+        framing.setFocusY(focusY);
+        framing.setCropPercent(cropPercent);
     }
 
     public void setImageKey(String imageKey) {
@@ -139,11 +204,29 @@ public class RaceCar {
                 || (imageUrl != null && !imageUrl.isBlank());
     }
 
-    private ImageFraming getOrCreateImageFraming() {
-        if (imageFraming == null) {
-            imageFraming = new ImageFraming();
+    private ImageFraming getOrCreateCardImageFraming() {
+        if (cardImageFraming == null) {
+            cardImageFraming = new ImageFraming();
         }
 
-        return imageFraming;
+        return cardImageFraming;
+    }
+
+    private ImageFraming getOrCreateAvatarImageFraming() {
+        if (avatarImageFraming == null || avatarImageFraming.isUnset()) {
+            avatarImageFraming = new ImageFraming();
+        }
+
+        return avatarImageFraming;
+    }
+
+    private ImageFraming getEffectiveAvatarImageFraming(
+            ImageFraming cardImageFraming) {
+
+        if (avatarImageFraming == null || avatarImageFraming.isUnset()) {
+            return cardImageFraming;
+        }
+
+        return avatarImageFraming;
     }
 }
