@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -34,6 +35,10 @@ import java.time.Instant;
                 @Index(
                         name = "idx_desert_live_author",
                         columnList = "created_by_user_id, created_at"
+                ),
+                @Index(
+                        name = "idx_desert_live_linked_race",
+                        columnList = "linked_race_id"
                 )
         }
 )
@@ -65,6 +70,10 @@ public class DesertLiveItem {
 
     @Column(name = "target_url", length = 500)
     private String targetUrl;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "linked_race_id", unique = true)
+    private Race linkedRace;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_user_id", nullable = false)
@@ -150,6 +159,10 @@ public class DesertLiveItem {
         return targetUrl;
     }
 
+    public Race getLinkedRace() {
+        return linkedRace;
+    }
+
     public User getCreatedBy() {
         return createdBy;
     }
@@ -228,6 +241,10 @@ public class DesertLiveItem {
 
     public void setTargetUrl(String targetUrl) {
         this.targetUrl = targetUrl;
+    }
+
+    public void setLinkedRace(Race linkedRace) {
+        this.linkedRace = linkedRace;
     }
 
     public void setCreatedBy(User createdBy) {

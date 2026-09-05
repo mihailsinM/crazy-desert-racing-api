@@ -1,7 +1,6 @@
 package com.crazydesert.racing.controller;
 
 import com.crazydesert.racing.RaceCar;
-import com.crazydesert.racing.dto.ImageFramingProfileRequest;
 import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
 import com.crazydesert.racing.dto.RaceCarUpdateRequest;
@@ -98,7 +97,7 @@ public class RaceCarController {
                 authentication.getName(),
                 id,
                 image,
-                buildImageFramingRequest(
+                ImageFramingRequest.fromParameters(
                         focusX,
                         focusY,
                         cropPercent,
@@ -144,42 +143,4 @@ public class RaceCarController {
         return raceCarService.assignCarToUser(userId, raceCarId);
     }
 
-    private ImageFramingRequest buildImageFramingRequest(
-            Integer focusX,
-            Integer focusY,
-            Integer cropPercent,
-            Integer avatarFocusX,
-            Integer avatarFocusY,
-            Integer avatarCropPercent,
-            Integer cardFocusX,
-            Integer cardFocusY,
-            Integer cardCropPercent) {
-
-        ImageFramingRequest request = new ImageFramingRequest();
-        request.focusX = focusX;
-        request.focusY = focusY;
-        request.cropPercent = cropPercent;
-
-        if (avatarFocusX != null
-                || avatarFocusY != null
-                || avatarCropPercent != null) {
-            request.avatar = new ImageFramingProfileRequest(
-                    avatarFocusX,
-                    avatarFocusY,
-                    avatarCropPercent
-            );
-        }
-
-        if (cardFocusX != null
-                || cardFocusY != null
-                || cardCropPercent != null) {
-            request.card = new ImageFramingProfileRequest(
-                    cardFocusX,
-                    cardFocusY,
-                    cardCropPercent
-            );
-        }
-
-        return request;
-    }
 }

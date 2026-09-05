@@ -1,9 +1,13 @@
 package com.crazydesert.racing.service;
 
 import com.crazydesert.racing.DesertLiveItem;
+import com.crazydesert.racing.ImageFraming;
+import com.crazydesert.racing.Race;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.DesertLiveItemResponse;
 import com.crazydesert.racing.dto.DesertLivePageResponse;
+import com.crazydesert.racing.dto.ImageFramingProfilesResponse;
+import com.crazydesert.racing.dto.ImageFramingResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +28,10 @@ public class DesertLiveMapper {
 
     public DesertLiveItemResponse toResponse(DesertLiveItem item) {
         User author = item.getCreatedBy();
+        Race linkedRace = item.getLinkedRace();
+        ImageFramingProfilesResponse imageFraming =
+                buildImageFraming(item, linkedRace);
+        ImageFramingResponse cardFraming = imageFraming.card();
 
         return new DesertLiveItemResponse(
                 item.getId(),
@@ -32,7 +40,8 @@ public class DesertLiveMapper {
                 item.getModerationStatus(),
                 item.getTitle(),
                 item.getDescription(),
-                item.getTargetUrl(),
+                buildTargetUrl(item, linkedRace),
+                linkedRace == null ? null : linkedRace.getId(),
                 author.getId(),
                 author.getName(),
                 buildAuthorAvatarUrl(author),
@@ -41,10 +50,23 @@ public class DesertLiveMapper {
                 item.getActiveUntil(),
                 item.getCreatedAt(),
                 item.getUpdatedAt(),
-                item.getImageFocusX(),
-                item.getImageFocusY(),
-                buildItemImageUrl(item)
+                cardFraming.focusX(),
+                cardFraming.focusY(),
+                cardFraming.cropPercent(),
+                buildItemImageUrl(item, linkedRace),
+                imageFraming
         );
+    }
+
+    private String buildTargetUrl(
+            DesertLiveItem item,
+            Race linkedRace) {
+
+        if (linkedRace != null) {
+            return "/races/" + linkedRace.getId();
+        }
+
+        return item.getTargetUrl();
     }
 
     private String buildAuthorAvatarUrl(User author) {
@@ -58,7 +80,14 @@ public class DesertLiveMapper {
                 + author.getAvatarVersion();
     }
 
-    private String buildItemImageUrl(DesertLiveItem item) {
+    private String buildItemImageUrl(
+            DesertLiveItem item,
+            Race linkedRace) {
+
+        if (linkedRace != null) {
+            return linkedRace.getImageUrl();
+        }
+
         if (item.getImageKey() == null) {
             return null;
         }
@@ -67,5 +96,25 @@ public class DesertLiveMapper {
                 + item.getImageKey()
                 + "?v="
                 + item.getImageVersion();
+    }
+
+    private ImageFramingProfilesResponse buildImageFraming(
+            DesertLiveItem item,
+            Race linkedRace) {
+
+        if (linkedRace != null) {
+            return linkedRace.getImageFraming();
+        }
+
+        ImageFramingResponse legacyFraming = new ImageFramingResponse(
+                item.getImageFocusX(),
+                item.getImageFocusY(),
+                ImageFraming.DEFAULT_CROP_PERCENT
+        );
+
+        return new ImageFramingProfilesResponse(
+                legacyFraming,
+                legacyFraming
+        );
     }
 }
