@@ -73,8 +73,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/*/cars").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/races").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/races/publications/synchronize").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/races/*").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/races/*").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/races/*/image").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/races/*/image/framing").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/races/*/image").hasRole("ADMIN")
 
                         .requestMatchers("/race-cars/my").authenticated()
                         .requestMatchers(HttpMethod.POST, "/race-cars/*/owner/*").hasRole("ADMIN")

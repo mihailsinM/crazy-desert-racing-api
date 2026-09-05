@@ -14,6 +14,7 @@ public record DesertLiveItemResponse(
         String title,
         String description,
         String targetUrl,
+        Long linkedRaceId,
         Long authorId,
         String authorName,
         String authorAvatarUrl,
@@ -24,6 +25,8 @@ public record DesertLiveItemResponse(
         Instant updatedAt,
         int imageFocusX,
         int imageFocusY,
-        String imageUrl
+        int imageCropPercent,
+        String imageUrl,
+        ImageFramingProfilesResponse imageFraming
 ) {
 }

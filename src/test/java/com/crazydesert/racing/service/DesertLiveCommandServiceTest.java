@@ -1,6 +1,7 @@
 package com.crazydesert.racing.service;
 
 import com.crazydesert.racing.DesertLiveItem;
+import com.crazydesert.racing.Race;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.DesertLiveCreateRequest;
 import com.crazydesert.racing.dto.DesertLiveItemResponse;
@@ -9,6 +10,7 @@ import com.crazydesert.racing.enums.DesertLiveCategory;
 import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.enums.DesertLiveSource;
 import com.crazydesert.racing.enums.Role;
+import com.crazydesert.racing.enums.RaceStatus;
 import com.crazydesert.racing.exception.InvalidDesertLiveItemException;
 import com.crazydesert.racing.exception.InvalidImageFocusException;
 import com.crazydesert.racing.repository.DesertLiveItemRepository;
@@ -22,6 +24,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -301,6 +304,54 @@ class DesertLiveCommandServiceTest {
         );
     }
 
+    @Test
+    void rejectsStandaloneRacePublication() {
+        User author = createUser(1L, "author@example.com", Role.USER);
+        DesertLiveCreateRequest request = createRequest();
+        request.category = DesertLiveCategory.RACE;
+
+        when(userRepository.findByEmail("author@example.com"))
+                .thenReturn(Optional.of(author));
+
+        assertThrows(
+                InvalidDesertLiveItemException.class,
+                () -> commandService.createMyItem(
+                        "author@example.com",
+                        request
+                )
+        );
+    }
+
+    @Test
+    void rejectsDirectChangesToLinkedRacePublication() {
+        User administrator = createUser(
+                1L,
+                "admin@example.com",
+                Role.ADMIN
+        );
+        Race race = new Race();
+        ReflectionTestUtils.setField(race, "id", 7L);
+        race.setName("Negev Challenge");
+        race.setLocation("Negev");
+        race.setStartDate(LocalDate.of(2026, 10, 10));
+        race.setMaxParticipants(60);
+        race.setStatus(RaceStatus.UPCOMING);
+        DesertLiveItem item = createItem(
+                10L,
+                administrator,
+                DesertLiveModerationStatus.APPROVED
+        );
+        item.setSource(DesertLiveSource.SYSTEM);
+        item.setLinkedRace(race);
+
+        when(itemRepository.findById(10L)).thenReturn(Optional.of(item));
+
+        assertThrows(
+                InvalidDesertLiveItemException.class,
+                () -> commandService.deleteAdminItem(10L)
+        );
+    }
+
     private User createUser(Long id, String email, Role role) {
         User user = new User();
         ReflectionTestUtils.setField(user, "id", id);
@@ -335,7 +386,7 @@ class DesertLiveCommandServiceTest {
 
     private DesertLiveCreateRequest createRequest() {
         DesertLiveCreateRequest request = new DesertLiveCreateRequest();
-        request.category = DesertLiveCategory.RACE;
+        request.category = DesertLiveCategory.COMMUNITY;
         request.title = "Desert update";
         request.description = "A new desert activity is available.";
         request.targetUrl = "/races";
@@ -345,7 +396,7 @@ class DesertLiveCommandServiceTest {
 
     private DesertLiveUpdateRequest updateRequest() {
         DesertLiveUpdateRequest request = new DesertLiveUpdateRequest();
-        request.category = DesertLiveCategory.RACE;
+        request.category = DesertLiveCategory.COMMUNITY;
         request.title = "Desert update";
         request.description = "A new desert activity is available.";
         request.targetUrl = "/races";

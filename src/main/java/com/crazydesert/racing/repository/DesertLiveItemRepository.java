@@ -11,9 +11,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public interface DesertLiveItemRepository
         extends JpaRepository<DesertLiveItem, Long> {
+
+    Optional<DesertLiveItem> findByLinkedRaceId(Long raceId);
 
     @Query("""
             select item

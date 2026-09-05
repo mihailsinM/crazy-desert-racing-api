@@ -5,6 +5,7 @@ import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.DesertLiveCreateRequest;
 import com.crazydesert.racing.dto.DesertLiveItemResponse;
 import com.crazydesert.racing.dto.DesertLiveUpdateRequest;
+import com.crazydesert.racing.enums.DesertLiveCategory;
 import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.enums.DesertLiveSource;
 import com.crazydesert.racing.exception.DesertLiveAccessDeniedException;
@@ -141,6 +142,7 @@ public class DesertLiveCommandService {
             DesertLiveUpdateRequest request) {
 
         DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
         applyUpdateRequest(item, request);
 
         return mapper.toResponse(itemRepository.save(item));
@@ -152,6 +154,7 @@ public class DesertLiveCommandService {
 
         User admin = getUserByEmail(currentEmail);
         DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
 
         item.setModerationStatus(DesertLiveModerationStatus.APPROVED);
         item.setModerationNote(null);
@@ -172,6 +175,7 @@ public class DesertLiveCommandService {
 
         User admin = getUserByEmail(currentEmail);
         DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
 
         item.setModerationStatus(DesertLiveModerationStatus.REJECTED);
         item.setModerationNote(reason.trim());
@@ -188,6 +192,7 @@ public class DesertLiveCommandService {
             int focusY) {
 
         DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
 
         imageFocusValidator.validate(focusX, focusY);
         imageService.storeImage(item, image);
@@ -198,6 +203,7 @@ public class DesertLiveCommandService {
 
     public DesertLiveItemResponse deleteAdminItemImage(Long id) {
         DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
         imageService.deleteImage(item);
         resetImageFocus(item);
 
@@ -223,6 +229,7 @@ public class DesertLiveCommandService {
             int focusY) {
 
         DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
 
         updateImageFocus(item, focusX, focusY);
 
@@ -231,6 +238,7 @@ public class DesertLiveCommandService {
 
     public void deleteAdminItem(Long id) {
         DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
 
         imageService.deleteImageIfPresent(item.getId());
         itemRepository.delete(item);
@@ -241,6 +249,7 @@ public class DesertLiveCommandService {
             DesertLiveCreateRequest request) {
 
         validateActivePeriod(request.activeFrom, request.activeUntil);
+        validateStandaloneCategory(request.category);
 
         item.setCategory(request.category);
         item.setTitle(request.title.trim());
@@ -255,6 +264,7 @@ public class DesertLiveCommandService {
             DesertLiveUpdateRequest request) {
 
         validateActivePeriod(request.activeFrom, request.activeUntil);
+        validateStandaloneCategory(request.category);
 
         item.setCategory(request.category);
         item.setTitle(request.title.trim());
@@ -273,6 +283,16 @@ public class DesertLiveCommandService {
                 && !activeUntil.isAfter(activeFrom)) {
             throw new InvalidDesertLiveItemException(
                     "Active-until time must be after active-from time"
+            );
+        }
+    }
+
+    private void validateStandaloneCategory(
+            DesertLiveCategory category) {
+
+        if (category == DesertLiveCategory.RACE) {
+            throw new InvalidDesertLiveItemException(
+                    "Race publications are created automatically from races"
             );
         }
     }
@@ -375,6 +395,14 @@ public class DesertLiveCommandService {
                                         + id
                                         + " not found"
                         ));
+    }
+
+    private void validateStandaloneItem(DesertLiveItem item) {
+        if (item.getLinkedRace() != null) {
+            throw new InvalidDesertLiveItemException(
+                    "Manage a linked race publication through the race"
+            );
+        }
     }
 
     private User getUserByEmail(String email) {
