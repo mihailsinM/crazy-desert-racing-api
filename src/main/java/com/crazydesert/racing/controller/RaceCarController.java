@@ -1,6 +1,7 @@
 package com.crazydesert.racing.controller;
 
 import com.crazydesert.racing.RaceCar;
+import com.crazydesert.racing.dto.ImageFramingProfileRequest;
 import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
 import com.crazydesert.racing.dto.RaceCarUpdateRequest;
@@ -83,17 +84,31 @@ public class RaceCarController {
             @PathVariable Long id,
             Authentication authentication,
             @RequestParam("file") MultipartFile image,
-            @RequestParam(defaultValue = "50") Integer focusX,
-            @RequestParam(defaultValue = "50") Integer focusY,
-            @RequestParam(defaultValue = "0") Integer cropPercent) {
+            @RequestParam(required = false) Integer focusX,
+            @RequestParam(required = false) Integer focusY,
+            @RequestParam(required = false) Integer cropPercent,
+            @RequestParam(required = false) Integer avatarFocusX,
+            @RequestParam(required = false) Integer avatarFocusY,
+            @RequestParam(required = false) Integer avatarCropPercent,
+            @RequestParam(required = false) Integer cardFocusX,
+            @RequestParam(required = false) Integer cardFocusY,
+            @RequestParam(required = false) Integer cardCropPercent) {
 
         return raceCarService.updateRaceCarImage(
                 authentication.getName(),
                 id,
                 image,
-                focusX,
-                focusY,
-                cropPercent
+                buildImageFramingRequest(
+                        focusX,
+                        focusY,
+                        cropPercent,
+                        avatarFocusX,
+                        avatarFocusY,
+                        avatarCropPercent,
+                        cardFocusX,
+                        cardFocusY,
+                        cardCropPercent
+                )
         );
     }
 
@@ -106,9 +121,7 @@ public class RaceCarController {
         return raceCarService.updateRaceCarImageFraming(
                 authentication.getName(),
                 id,
-                request.focusX,
-                request.focusY,
-                request.cropPercent
+                request
         );
     }
 
@@ -129,5 +142,44 @@ public class RaceCarController {
             @PathVariable Long userId) {
 
         return raceCarService.assignCarToUser(userId, raceCarId);
+    }
+
+    private ImageFramingRequest buildImageFramingRequest(
+            Integer focusX,
+            Integer focusY,
+            Integer cropPercent,
+            Integer avatarFocusX,
+            Integer avatarFocusY,
+            Integer avatarCropPercent,
+            Integer cardFocusX,
+            Integer cardFocusY,
+            Integer cardCropPercent) {
+
+        ImageFramingRequest request = new ImageFramingRequest();
+        request.focusX = focusX;
+        request.focusY = focusY;
+        request.cropPercent = cropPercent;
+
+        if (avatarFocusX != null
+                || avatarFocusY != null
+                || avatarCropPercent != null) {
+            request.avatar = new ImageFramingProfileRequest(
+                    avatarFocusX,
+                    avatarFocusY,
+                    avatarCropPercent
+            );
+        }
+
+        if (cardFocusX != null
+                || cardFocusY != null
+                || cardCropPercent != null) {
+            request.card = new ImageFramingProfileRequest(
+                    cardFocusX,
+                    cardFocusY,
+                    cardCropPercent
+            );
+        }
+
+        return request;
     }
 }

@@ -4,6 +4,8 @@ package com.crazydesert.racing.service;
 import com.crazydesert.racing.ImageFraming;
 import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
+import com.crazydesert.racing.dto.ImageFramingProfileRequest;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
 import com.crazydesert.racing.dto.RaceCarUpdateRequest;
 import com.crazydesert.racing.enums.MediaImageVisibility;
@@ -161,17 +163,13 @@ public class RaceCarService {
             String currentUserEmail,
             Long id,
             MultipartFile image,
-            Integer focusX,
-            Integer focusY,
-            Integer cropPercent) {
+            ImageFramingRequest imageFramingRequest) {
 
         RaceCar raceCar = getManagedRaceCar(currentUserEmail, id);
 
-        validateAndApplyImageFraming(
+        applyImageFramingForUpload(
                 raceCar,
-                focusX,
-                focusY,
-                cropPercent
+                imageFramingRequest
         );
 
         var mediaImage = mediaImageService.storeImage(
@@ -189,9 +187,7 @@ public class RaceCarService {
     public RaceCar updateRaceCarImageFraming(
             String currentUserEmail,
             Long id,
-            Integer focusX,
-            Integer focusY,
-            Integer cropPercent) {
+            ImageFramingRequest request) {
 
         RaceCar raceCar = getManagedRaceCar(currentUserEmail, id);
 
@@ -201,12 +197,7 @@ public class RaceCarService {
             );
         }
 
-        validateAndApplyImageFraming(
-                raceCar,
-                focusX,
-                focusY,
-                cropPercent
-        );
+        applyImageFramingForUpdate(raceCar, request);
 
         return raceCarRepository.save(raceCar);
     }
@@ -294,7 +285,7 @@ public class RaceCarService {
             focusY = ImageFraming.DEFAULT_FOCUS;
         }
 
-        validateAndApplyImageFraming(
+        validateAndApplyLegacyImageFraming(
                 raceCar,
                 focusX,
                 focusY,
@@ -319,7 +310,7 @@ public class RaceCarService {
             focusY = raceCar.getImageFocusY();
         }
 
-        validateAndApplyImageFraming(
+        validateAndApplyLegacyImageFraming(
                 raceCar,
                 focusX,
                 focusY,
@@ -329,7 +320,86 @@ public class RaceCarService {
         );
     }
 
-    private void validateAndApplyImageFraming(
+    private void applyImageFramingForUpload(
+            RaceCar raceCar,
+            ImageFramingRequest request) {
+
+        if (request != null && request.hasExplicitProfiles()) {
+            validateAndApplyExplicitImageFraming(raceCar, request);
+            return;
+        }
+
+        Integer focusX = request == null ? null : request.focusX;
+        Integer focusY = request == null ? null : request.focusY;
+        Integer cropPercent = request == null ? null : request.cropPercent;
+
+        validateAndApplyLegacyImageFraming(
+                raceCar,
+                focusX == null ? ImageFraming.DEFAULT_FOCUS : focusX,
+                focusY == null ? ImageFraming.DEFAULT_FOCUS : focusY,
+                cropPercent == null
+                        ? ImageFraming.DEFAULT_CROP_PERCENT
+                        : cropPercent
+        );
+    }
+
+    private void applyImageFramingForUpdate(
+            RaceCar raceCar,
+            ImageFramingRequest request) {
+
+        if (request != null && request.hasExplicitProfiles()) {
+            validateAndApplyExplicitImageFraming(raceCar, request);
+            return;
+        }
+
+        validateAndApplyLegacyImageFraming(
+                raceCar,
+                request == null ? null : request.focusX,
+                request == null ? null : request.focusY,
+                request == null ? null : request.cropPercent
+        );
+    }
+
+    private void validateAndApplyExplicitImageFraming(
+            RaceCar raceCar,
+            ImageFramingRequest request) {
+
+        if (request.avatar == null || request.card == null) {
+            throw new InvalidImageFramingException(
+                    "Both avatar and card image framing profiles are required"
+            );
+        }
+
+        if (request.hasLegacyProfile()) {
+            throw new InvalidImageFramingException(
+                    "Use either avatar/card profiles or legacy image framing fields"
+            );
+        }
+
+        validateProfile(request.avatar);
+        validateProfile(request.card);
+
+        raceCar.applyAvatarImageFraming(
+                request.avatar.focusX,
+                request.avatar.focusY,
+                request.avatar.cropPercent
+        );
+        raceCar.applyCardImageFraming(
+                request.card.focusX,
+                request.card.focusY,
+                request.card.cropPercent
+        );
+    }
+
+    private void validateProfile(ImageFramingProfileRequest profile) {
+        imageFramingValidator.validate(
+                profile.focusX,
+                profile.focusY,
+                profile.cropPercent
+        );
+    }
+
+    private void validateAndApplyLegacyImageFraming(
             RaceCar raceCar,
             Integer focusX,
             Integer focusY,
@@ -340,15 +410,19 @@ public class RaceCarService {
                 focusY,
                 cropPercent
         );
-        raceCar.setImageFocusX(focusX);
-        raceCar.setImageFocusY(focusY);
-        raceCar.setImageCropPercent(cropPercent);
+        raceCar.applyCardImageFraming(focusX, focusY, cropPercent);
+        raceCar.applyAvatarImageFraming(focusX, focusY, cropPercent);
     }
 
     private void resetImageFraming(RaceCar raceCar) {
-        raceCar.setImageFocusX(ImageFraming.DEFAULT_FOCUS);
-        raceCar.setImageFocusY(ImageFraming.DEFAULT_FOCUS);
-        raceCar.setImageCropPercent(
+        raceCar.applyCardImageFraming(
+                ImageFraming.DEFAULT_FOCUS,
+                ImageFraming.DEFAULT_FOCUS,
+                ImageFraming.DEFAULT_CROP_PERCENT
+        );
+        raceCar.applyAvatarImageFraming(
+                ImageFraming.DEFAULT_FOCUS,
+                ImageFraming.DEFAULT_FOCUS,
                 ImageFraming.DEFAULT_CROP_PERCENT
         );
     }

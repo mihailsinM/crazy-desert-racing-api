@@ -1,5 +1,6 @@
 package com.crazydesert.racing;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
@@ -42,5 +43,12 @@ public class ImageFraming {
 
     public void setCropPercent(int cropPercent) {
         this.cropPercent = cropPercent;
+    }
+
+    @JsonIgnore
+    public boolean isUnset() {
+        return focusX == null
+                && focusY == null
+                && cropPercent == null;
     }
 }
