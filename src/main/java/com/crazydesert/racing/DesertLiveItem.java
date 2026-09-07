@@ -3,7 +3,10 @@ package com.crazydesert.racing;
 import com.crazydesert.racing.enums.DesertLiveCategory;
 import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.enums.DesertLiveSource;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -43,8 +46,6 @@ import java.time.Instant;
         }
 )
 public class DesertLiveItem {
-
-    private static final int DEFAULT_IMAGE_FOCUS = 50;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -101,11 +102,39 @@ public class DesertLiveItem {
     @Column(name = "image_version")
     private Long imageVersion;
 
-    @Column(name = "image_focus_x")
-    private Integer imageFocusX;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(
+                    name = "focusX",
+                    column = @Column(name = "image_focus_x")
+            ),
+            @AttributeOverride(
+                    name = "focusY",
+                    column = @Column(name = "image_focus_y")
+            ),
+            @AttributeOverride(
+                    name = "cropPercent",
+                    column = @Column(name = "image_crop_percent")
+            )
+    })
+    private ImageFraming cardImageFraming = new ImageFraming();
 
-    @Column(name = "image_focus_y")
-    private Integer imageFocusY;
+    @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(
+                    name = "focusX",
+                    column = @Column(name = "avatar_image_focus_x")
+            ),
+            @AttributeOverride(
+                    name = "focusY",
+                    column = @Column(name = "avatar_image_focus_y")
+            ),
+            @AttributeOverride(
+                    name = "cropPercent",
+                    column = @Column(name = "avatar_image_crop_percent")
+            )
+    })
+    private ImageFraming avatarImageFraming = new ImageFraming();
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -196,15 +225,25 @@ public class DesertLiveItem {
     }
 
     public int getImageFocusX() {
-        return imageFocusX == null
-                ? DEFAULT_IMAGE_FOCUS
-                : imageFocusX;
+        return getOrCreateCardImageFraming().getFocusX();
     }
 
     public int getImageFocusY() {
-        return imageFocusY == null
-                ? DEFAULT_IMAGE_FOCUS
-                : imageFocusY;
+        return getOrCreateCardImageFraming().getFocusY();
+    }
+
+    public int getImageCropPercent() {
+        return getOrCreateCardImageFraming().getCropPercent();
+    }
+
+    public ImageFraming getCardImageFraming() {
+        return getOrCreateCardImageFraming();
+    }
+
+    public ImageFraming getAvatarImageFraming() {
+        return getEffectiveAvatarImageFraming(
+                getOrCreateCardImageFraming()
+        );
     }
 
     public Instant getCreatedAt() {
@@ -280,11 +319,33 @@ public class DesertLiveItem {
     }
 
     public void setImageFocusX(int imageFocusX) {
-        this.imageFocusX = imageFocusX;
+        getOrCreateCardImageFraming().setFocusX(imageFocusX);
     }
 
     public void setImageFocusY(int imageFocusY) {
-        this.imageFocusY = imageFocusY;
+        getOrCreateCardImageFraming().setFocusY(imageFocusY);
+    }
+
+    public void applyCardImageFraming(
+            int focusX,
+            int focusY,
+            int cropPercent) {
+
+        ImageFraming framing = getOrCreateCardImageFraming();
+        framing.setFocusX(focusX);
+        framing.setFocusY(focusY);
+        framing.setCropPercent(cropPercent);
+    }
+
+    public void applyAvatarImageFraming(
+            int focusX,
+            int focusY,
+            int cropPercent) {
+
+        ImageFraming framing = getOrCreateAvatarImageFraming();
+        framing.setFocusX(focusX);
+        framing.setFocusY(focusY);
+        framing.setCropPercent(cropPercent);
     }
 
     public void setCreatedAt(Instant createdAt) {
@@ -297,5 +358,31 @@ public class DesertLiveItem {
 
     public void setModeratedAt(Instant moderatedAt) {
         this.moderatedAt = moderatedAt;
+    }
+
+    private ImageFraming getOrCreateCardImageFraming() {
+        if (cardImageFraming == null) {
+            cardImageFraming = new ImageFraming();
+        }
+
+        return cardImageFraming;
+    }
+
+    private ImageFraming getOrCreateAvatarImageFraming() {
+        if (avatarImageFraming == null || avatarImageFraming.isUnset()) {
+            avatarImageFraming = new ImageFraming();
+        }
+
+        return avatarImageFraming;
+    }
+
+    private ImageFraming getEffectiveAvatarImageFraming(
+            ImageFraming cardImageFraming) {
+
+        if (avatarImageFraming == null || avatarImageFraming.isUnset()) {
+            return cardImageFraming;
+        }
+
+        return avatarImageFraming;
     }
 }
