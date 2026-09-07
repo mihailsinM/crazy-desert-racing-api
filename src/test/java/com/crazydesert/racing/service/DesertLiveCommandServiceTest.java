@@ -6,6 +6,8 @@ import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.DesertLiveCreateRequest;
 import com.crazydesert.racing.dto.DesertLiveItemResponse;
 import com.crazydesert.racing.dto.DesertLiveUpdateRequest;
+import com.crazydesert.racing.dto.ImageFramingProfileRequest;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.enums.DesertLiveCategory;
 import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.enums.DesertLiveSource;
@@ -55,7 +57,7 @@ class DesertLiveCommandServiceTest {
                 itemRepository,
                 userRepository,
                 imageService,
-                new ImageFocusValidator(),
+                new ImageFramingValidator(new ImageFocusValidator()),
                 new DesertLiveMapper()
         );
     }
@@ -215,6 +217,43 @@ class DesertLiveCommandServiceTest {
 
         assertEquals(20, response.imageFocusX());
         assertEquals(80, response.imageFocusY());
+        assertEquals(
+                DesertLiveModerationStatus.APPROVED,
+                response.moderationStatus()
+        );
+    }
+
+    @Test
+    void changesAvatarAndCardFramingIndependently() {
+        User author = createUser(1L, "author@example.com", Role.USER);
+        DesertLiveItem item = createItem(
+                10L,
+                author,
+                DesertLiveModerationStatus.APPROVED
+        );
+        item.setImageKey("image-key");
+        ImageFramingRequest request = new ImageFramingRequest();
+        request.avatar = new ImageFramingProfileRequest(20, 35, 10);
+        request.card = new ImageFramingProfileRequest(75, 60, 25);
+
+        when(userRepository.findByEmail("author@example.com"))
+                .thenReturn(Optional.of(author));
+        when(itemRepository.findById(10L)).thenReturn(Optional.of(item));
+        when(itemRepository.save(item)).thenReturn(item);
+
+        DesertLiveItemResponse response =
+                commandService.updateMyItemImageFraming(
+                        "author@example.com",
+                        10L,
+                        request
+                );
+
+        assertEquals(20, response.imageFraming().avatar().focusX());
+        assertEquals(35, response.imageFraming().avatar().focusY());
+        assertEquals(10, response.imageFraming().avatar().cropPercent());
+        assertEquals(75, response.imageFraming().card().focusX());
+        assertEquals(60, response.imageFraming().card().focusY());
+        assertEquals(25, response.imageFraming().card().cropPercent());
         assertEquals(
                 DesertLiveModerationStatus.APPROVED,
                 response.moderationStatus()

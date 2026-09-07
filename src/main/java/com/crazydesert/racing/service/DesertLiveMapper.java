@@ -1,7 +1,6 @@
 package com.crazydesert.racing.service;
 
 import com.crazydesert.racing.DesertLiveItem;
-import com.crazydesert.racing.ImageFraming;
 import com.crazydesert.racing.Race;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.DesertLiveItemResponse;
@@ -106,15 +105,14 @@ public class DesertLiveMapper {
             return linkedRace.getImageFraming();
         }
 
-        ImageFramingResponse legacyFraming = new ImageFramingResponse(
-                item.getImageFocusX(),
-                item.getImageFocusY(),
-                ImageFraming.DEFAULT_CROP_PERCENT
-        );
+        ImageFramingResponse cardFraming =
+                ImageFramingResponse.from(item.getCardImageFraming());
+        ImageFramingResponse avatarFraming =
+                ImageFramingResponse.from(item.getAvatarImageFraming());
 
         return new ImageFramingProfilesResponse(
-                legacyFraming,
-                legacyFraming
+                avatarFraming,
+                cardFraming
         );
     }
 }

@@ -6,6 +6,7 @@ import com.crazydesert.racing.dto.DesertLivePageResponse;
 import com.crazydesert.racing.dto.DesertLiveRejectRequest;
 import com.crazydesert.racing.dto.DesertLiveUpdateRequest;
 import com.crazydesert.racing.dto.ImageFocusRequest;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.enums.DesertLiveCategory;
 import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.service.DesertLiveCommandService;
@@ -113,15 +114,39 @@ public class DesertLiveAdminController {
     public DesertLiveItemResponse updateAdminItemImage(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile image,
-            @RequestParam(defaultValue = "50") int focusX,
-            @RequestParam(defaultValue = "50") int focusY) {
+            @RequestParam(required = false) Integer focusX,
+            @RequestParam(required = false) Integer focusY,
+            @RequestParam(required = false) Integer cropPercent,
+            @RequestParam(required = false) Integer avatarFocusX,
+            @RequestParam(required = false) Integer avatarFocusY,
+            @RequestParam(required = false) Integer avatarCropPercent,
+            @RequestParam(required = false) Integer cardFocusX,
+            @RequestParam(required = false) Integer cardFocusY,
+            @RequestParam(required = false) Integer cardCropPercent) {
 
         return commandService.updateAdminItemImage(
                 id,
                 image,
-                focusX,
-                focusY
+                ImageFramingRequest.fromParameters(
+                        focusX,
+                        focusY,
+                        cropPercent,
+                        avatarFocusX,
+                        avatarFocusY,
+                        avatarCropPercent,
+                        cardFocusX,
+                        cardFocusY,
+                        cardCropPercent
+                )
         );
+    }
+
+    @PutMapping("/{id}/image/framing")
+    public DesertLiveItemResponse updateAdminItemImageFraming(
+            @PathVariable Long id,
+            @RequestBody ImageFramingRequest request) {
+
+        return commandService.updateAdminItemImageFraming(id, request);
     }
 
     @PutMapping("/{id}/image/focus")

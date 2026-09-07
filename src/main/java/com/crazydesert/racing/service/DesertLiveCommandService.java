@@ -1,16 +1,20 @@
 package com.crazydesert.racing.service;
 
 import com.crazydesert.racing.DesertLiveItem;
+import com.crazydesert.racing.ImageFraming;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.dto.DesertLiveCreateRequest;
 import com.crazydesert.racing.dto.DesertLiveItemResponse;
 import com.crazydesert.racing.dto.DesertLiveUpdateRequest;
+import com.crazydesert.racing.dto.ImageFramingProfileRequest;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.enums.DesertLiveCategory;
 import com.crazydesert.racing.enums.DesertLiveModerationStatus;
 import com.crazydesert.racing.enums.DesertLiveSource;
 import com.crazydesert.racing.exception.DesertLiveAccessDeniedException;
 import com.crazydesert.racing.exception.DesertLiveItemNotFoundException;
 import com.crazydesert.racing.exception.InvalidDesertLiveItemException;
+import com.crazydesert.racing.exception.InvalidImageFramingException;
 import com.crazydesert.racing.exception.InvalidImageFocusException;
 import com.crazydesert.racing.exception.UserNotFoundException;
 import com.crazydesert.racing.repository.DesertLiveItemRepository;
@@ -32,20 +36,20 @@ public class DesertLiveCommandService {
     private final DesertLiveItemRepository itemRepository;
     private final UserRepository userRepository;
     private final DesertLiveImageService imageService;
-    private final ImageFocusValidator imageFocusValidator;
+    private final ImageFramingValidator imageFramingValidator;
     private final DesertLiveMapper mapper;
 
     public DesertLiveCommandService(
             DesertLiveItemRepository itemRepository,
             UserRepository userRepository,
             DesertLiveImageService imageService,
-            ImageFocusValidator imageFocusValidator,
+            ImageFramingValidator imageFramingValidator,
             DesertLiveMapper mapper) {
 
         this.itemRepository = itemRepository;
         this.userRepository = userRepository;
         this.imageService = imageService;
-        this.imageFocusValidator = imageFocusValidator;
+        this.imageFramingValidator = imageFramingValidator;
         this.mapper = mapper;
     }
 
@@ -89,17 +93,30 @@ public class DesertLiveCommandService {
             String currentEmail,
             Long id,
             MultipartFile image,
-            int focusX,
-            int focusY) {
+            ImageFramingRequest request) {
 
         DesertLiveItem item = getOwnedUserItem(id, currentEmail);
 
-        imageFocusValidator.validate(focusX, focusY);
+        applyImageFramingForUpload(item, request);
         imageService.storeImage(item, image);
-        applyImageFocus(item, focusX, focusY);
         resetUserItemToPending(item);
 
         return mapper.toResponse(itemRepository.save(item));
+    }
+
+    public DesertLiveItemResponse updateMyItemImage(
+            String currentEmail,
+            Long id,
+            MultipartFile image,
+            int focusX,
+            int focusY) {
+
+        return updateMyItemImage(
+                currentEmail,
+                id,
+                image,
+                legacyImageFramingRequest(focusX, focusY)
+        );
     }
 
     public DesertLiveItemResponse deleteMyItemImage(
@@ -109,7 +126,7 @@ public class DesertLiveCommandService {
         DesertLiveItem item = getOwnedUserItem(id, currentEmail);
 
         imageService.deleteImage(item);
-        resetImageFocus(item);
+        resetImageFraming(item);
         resetUserItemToPending(item);
 
         return mapper.toResponse(itemRepository.save(item));
@@ -188,24 +205,35 @@ public class DesertLiveCommandService {
     public DesertLiveItemResponse updateAdminItemImage(
             Long id,
             MultipartFile image,
-            int focusX,
-            int focusY) {
+            ImageFramingRequest request) {
 
         DesertLiveItem item = getItem(id);
         validateStandaloneItem(item);
 
-        imageFocusValidator.validate(focusX, focusY);
+        applyImageFramingForUpload(item, request);
         imageService.storeImage(item, image);
-        applyImageFocus(item, focusX, focusY);
 
         return mapper.toResponse(itemRepository.save(item));
+    }
+
+    public DesertLiveItemResponse updateAdminItemImage(
+            Long id,
+            MultipartFile image,
+            int focusX,
+            int focusY) {
+
+        return updateAdminItemImage(
+                id,
+                image,
+                legacyImageFramingRequest(focusX, focusY)
+        );
     }
 
     public DesertLiveItemResponse deleteAdminItemImage(Long id) {
         DesertLiveItem item = getItem(id);
         validateStandaloneItem(item);
         imageService.deleteImage(item);
-        resetImageFocus(item);
+        resetImageFraming(item);
 
         return mapper.toResponse(itemRepository.save(item));
     }
@@ -218,7 +246,7 @@ public class DesertLiveCommandService {
 
         DesertLiveItem item = getOwnedUserItem(id, currentEmail);
 
-        updateImageFocus(item, focusX, focusY);
+        updateLegacyImageFocus(item, focusX, focusY);
 
         return mapper.toResponse(itemRepository.save(item));
     }
@@ -231,7 +259,29 @@ public class DesertLiveCommandService {
         DesertLiveItem item = getItem(id);
         validateStandaloneItem(item);
 
-        updateImageFocus(item, focusX, focusY);
+        updateLegacyImageFocus(item, focusX, focusY);
+
+        return mapper.toResponse(itemRepository.save(item));
+    }
+
+    public DesertLiveItemResponse updateMyItemImageFraming(
+            String currentEmail,
+            Long id,
+            ImageFramingRequest request) {
+
+        DesertLiveItem item = getOwnedUserItem(id, currentEmail);
+        updateImageFraming(item, request);
+
+        return mapper.toResponse(itemRepository.save(item));
+    }
+
+    public DesertLiveItemResponse updateAdminItemImageFraming(
+            Long id,
+            ImageFramingRequest request) {
+
+        DesertLiveItem item = getItem(id);
+        validateStandaloneItem(item);
+        updateImageFraming(item, request);
 
         return mapper.toResponse(itemRepository.save(item));
     }
@@ -335,7 +385,7 @@ public class DesertLiveCommandService {
         item.setModeratedAt(null);
     }
 
-    private void updateImageFocus(
+    private void updateLegacyImageFocus(
             DesertLiveItem item,
             int focusX,
             int focusY) {
@@ -346,24 +396,142 @@ public class DesertLiveCommandService {
             );
         }
 
-        imageFocusValidator.validate(focusX, focusY);
-        applyImageFocus(item, focusX, focusY);
+        applyImageFramingForUpdate(
+                item,
+                legacyImageFramingRequest(focusX, focusY)
+        );
     }
 
-    private void applyImageFocus(
+    private void updateImageFraming(
             DesertLiveItem item,
+            ImageFramingRequest request) {
+
+        if (item.getImageKey() == null) {
+            throw new InvalidImageFramingException(
+                    "Upload an image before setting its framing"
+            );
+        }
+
+        applyImageFramingForUpdate(item, request);
+    }
+
+    private void resetImageFraming(DesertLiveItem item) {
+        item.applyCardImageFraming(
+                ImageFraming.DEFAULT_FOCUS,
+                ImageFraming.DEFAULT_FOCUS,
+                ImageFraming.DEFAULT_CROP_PERCENT
+        );
+        item.applyAvatarImageFraming(
+                ImageFraming.DEFAULT_FOCUS,
+                ImageFraming.DEFAULT_FOCUS,
+                ImageFraming.DEFAULT_CROP_PERCENT
+        );
+    }
+
+    private void applyImageFramingForUpload(
+            DesertLiveItem item,
+            ImageFramingRequest request) {
+
+        if (request != null && request.hasExplicitProfiles()) {
+            validateAndApplyExplicitImageFraming(item, request);
+            return;
+        }
+
+        Integer focusX = request == null ? null : request.focusX;
+        Integer focusY = request == null ? null : request.focusY;
+        Integer cropPercent = request == null ? null : request.cropPercent;
+
+        validateAndApplyLegacyImageFraming(
+                item,
+                focusX == null ? ImageFraming.DEFAULT_FOCUS : focusX,
+                focusY == null ? ImageFraming.DEFAULT_FOCUS : focusY,
+                cropPercent == null
+                        ? ImageFraming.DEFAULT_CROP_PERCENT
+                        : cropPercent
+        );
+    }
+
+    private void applyImageFramingForUpdate(
+            DesertLiveItem item,
+            ImageFramingRequest request) {
+
+        if (request != null && request.hasExplicitProfiles()) {
+            validateAndApplyExplicitImageFraming(item, request);
+            return;
+        }
+
+        validateAndApplyLegacyImageFraming(
+                item,
+                request == null ? null : request.focusX,
+                request == null ? null : request.focusY,
+                request == null ? null : request.cropPercent
+        );
+    }
+
+    private void validateAndApplyExplicitImageFraming(
+            DesertLiveItem item,
+            ImageFramingRequest request) {
+
+        if (request.avatar == null || request.card == null) {
+            throw new InvalidImageFramingException(
+                    "Both avatar and card image framing profiles are required"
+            );
+        }
+
+        if (request.hasLegacyProfile()) {
+            throw new InvalidImageFramingException(
+                    "Use either avatar/card profiles or legacy image framing fields"
+            );
+        }
+
+        validateProfile(request.avatar);
+        validateProfile(request.card);
+
+        item.applyAvatarImageFraming(
+                request.avatar.focusX,
+                request.avatar.focusY,
+                request.avatar.cropPercent
+        );
+        item.applyCardImageFraming(
+                request.card.focusX,
+                request.card.focusY,
+                request.card.cropPercent
+        );
+    }
+
+    private void validateProfile(ImageFramingProfileRequest profile) {
+        imageFramingValidator.validate(
+                profile.focusX,
+                profile.focusY,
+                profile.cropPercent
+        );
+    }
+
+    private void validateAndApplyLegacyImageFraming(
+            DesertLiveItem item,
+            Integer focusX,
+            Integer focusY,
+            Integer cropPercent) {
+
+        imageFramingValidator.validate(focusX, focusY, cropPercent);
+        item.applyCardImageFraming(focusX, focusY, cropPercent);
+        item.applyAvatarImageFraming(focusX, focusY, cropPercent);
+    }
+
+    private ImageFramingRequest legacyImageFramingRequest(
             int focusX,
             int focusY) {
 
-        item.setImageFocusX(focusX);
-        item.setImageFocusY(focusY);
-    }
-
-    private void resetImageFocus(DesertLiveItem item) {
-        applyImageFocus(
-                item,
-                ImageFocusValidator.DEFAULT_FOCUS,
-                ImageFocusValidator.DEFAULT_FOCUS
+        return ImageFramingRequest.fromParameters(
+                focusX,
+                focusY,
+                ImageFraming.DEFAULT_CROP_PERCENT,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
         );
     }
 
