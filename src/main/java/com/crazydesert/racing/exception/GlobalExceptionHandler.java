@@ -146,7 +146,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({
             DesertLiveItemNotFoundException.class,
             DesertLiveImageNotFoundException.class,
-            MediaImageNotFoundException.class
+            MediaImageNotFoundException.class,
+            UserPhotoNotFoundException.class
     })
     public Map<String, String> handleDesertLiveNotFoundException(
             RuntimeException ex) {
@@ -168,12 +169,35 @@ public class GlobalExceptionHandler {
         return error;
     }
 
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(UserPhotoAccessDeniedException.class)
+    public Map<String, String> handleUserPhotoAccessDeniedException(
+            UserPhotoAccessDeniedException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(DuplicateUserPhotoReportException.class)
+    public Map<String, String> handleDuplicateUserPhotoReportException(
+            DuplicateUserPhotoReportException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler({
             InvalidDesertLiveItemException.class,
             InvalidImageFocusException.class,
             InvalidImageFramingException.class,
-            InvalidImageException.class
+            InvalidImageException.class,
+            InvalidUserPhotoException.class
     })
     public Map<String, String> handleInvalidDesertLiveRequest(
             RuntimeException ex) {

@@ -8,4 +8,6 @@ import java.util.List;
 public interface RaceCarRepository extends JpaRepository <RaceCar, Long>{
 
     List<RaceCar> findByOwnerId(Long ownerId);
+
+    long countByOwnerId(Long ownerId);
 }

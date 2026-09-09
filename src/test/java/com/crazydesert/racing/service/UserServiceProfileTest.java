@@ -48,7 +48,9 @@ class UserServiceProfileTest {
         userService = new UserService(
                 userRepository,
                 raceCarRepository,
-                passwordEncoder
+                passwordEncoder,
+                new ImageMetadataSanitizer(),
+                new ImageFramingValidator(new ImageFocusValidator())
         );
     }
 

@@ -18,6 +18,14 @@ public class ImageUploadValidator {
             "image/webp"
     );
 
+    private final ImageMetadataSanitizer imageMetadataSanitizer;
+
+    public ImageUploadValidator(
+            ImageMetadataSanitizer imageMetadataSanitizer) {
+
+        this.imageMetadataSanitizer = imageMetadataSanitizer;
+    }
+
     public byte[] validateAndRead(MultipartFile image) {
         if (image == null || image.isEmpty()) {
             throw new InvalidImageException("Image must not be empty");
@@ -52,7 +60,7 @@ public class ImageUploadValidator {
             );
         }
 
-        return imageData;
+        return imageMetadataSanitizer.sanitize(imageData, contentType);
     }
 
     private boolean hasExpectedImageSignature(

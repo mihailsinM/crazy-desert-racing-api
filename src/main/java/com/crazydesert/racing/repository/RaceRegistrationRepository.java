@@ -16,4 +16,8 @@ public interface RaceRegistrationRepository extends JpaRepository<RaceRegistrati
 
     List<RaceRegistration> findByRaceId(Long raceId);
 
+    long countByUserId(Long userId);
+
+    List<RaceRegistration> findByUserId(Long userId);
+
 }
