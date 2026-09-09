@@ -12,7 +12,7 @@ public class UserProfileUpdateRequest {
     @Size(max = 80, message = "Name must be at most 80 characters")
     public String name;
 
-    @Min(value = 1, message = "Age must be at least 1")
+    @Min(value = 18, message = "You must be at least 18 years old")
     @Max(value = 120, message = "Age must be at most 120")
     public int age;
 

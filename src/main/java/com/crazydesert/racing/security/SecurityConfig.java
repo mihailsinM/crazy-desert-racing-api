@@ -63,6 +63,10 @@ public class SecurityConfig {
 
                         .requestMatchers("/users/me").authenticated()
                         .requestMatchers("/users/me/**").authenticated()
+                        .requestMatchers("/drivers/**").authenticated()
+                        .requestMatchers("/driver-photos/**").authenticated()
+                        .requestMatchers("/admin/photo-reports/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/user-photos/**").hasRole("ADMIN")
 
                         .requestMatchers("/users/*/make-admin").hasRole("ADMIN")
                         .requestMatchers("/users/*/verify-license").hasRole("ADMIN")

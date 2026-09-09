@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ImageUploadValidatorTest {
 
     private final ImageUploadValidator imageUploadValidator =
-            new ImageUploadValidator();
+            new ImageUploadValidator(new ImageMetadataSanitizer());
 
     @Test
     void acceptsValidPngImage() {

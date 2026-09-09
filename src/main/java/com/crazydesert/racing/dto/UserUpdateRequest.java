@@ -8,7 +8,7 @@ public class UserUpdateRequest {
     @NotBlank(message = "Name must not be blank")
     public String name;
 
-    @Min(value = 1, message = "Age must be at least 1")
+    @Min(value = 18, message = "You must be at least 18 years old")
     public int age;
 
     @Email(message = "Email must be valid")

@@ -2,6 +2,8 @@ package com.crazydesert.racing.service;
 
 import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
+import com.crazydesert.racing.dto.ImageFramingProfileRequest;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.UserAvatarResponse;
 import com.crazydesert.racing.dto.UserCreateRequest;
 import com.crazydesert.racing.dto.UserProfileUpdateRequest;
@@ -12,6 +14,7 @@ import com.crazydesert.racing.exception.AvatarNotFoundException;
 import com.crazydesert.racing.exception.AvatarStorageException;
 import com.crazydesert.racing.exception.EmailAlreadyInUseException;
 import com.crazydesert.racing.exception.InvalidAvatarException;
+import com.crazydesert.racing.exception.InvalidImageFramingException;
 import com.crazydesert.racing.exception.UserNotFoundException;
 import com.crazydesert.racing.repository.RaceCarRepository;
 import com.crazydesert.racing.repository.UserRepository;
@@ -37,11 +40,21 @@ public class UserService {
     private final UserRepository userRepository;
     private final RaceCarRepository raceCarRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ImageMetadataSanitizer imageMetadataSanitizer;
+    private final ImageFramingValidator imageFramingValidator;
 
-    public UserService(UserRepository userRepository, RaceCarRepository raceCarRepository, PasswordEncoder passwordEncoder) {
+    public UserService(
+            UserRepository userRepository,
+            RaceCarRepository raceCarRepository,
+            PasswordEncoder passwordEncoder,
+            ImageMetadataSanitizer imageMetadataSanitizer,
+            ImageFramingValidator imageFramingValidator) {
+
         this.userRepository = userRepository;
         this.raceCarRepository = raceCarRepository;
         this.passwordEncoder = passwordEncoder;
+        this.imageMetadataSanitizer = imageMetadataSanitizer;
+        this.imageFramingValidator = imageFramingValidator;
     }
 
     private UserResponse toResponse(User user) {
@@ -56,6 +69,14 @@ public class UserService {
         response.licenseVerified = user.isLicenseVerified();
         response.role = user.getRole();
         response.avatarUrl = buildAvatarUrl(user);
+        response.imageFraming = user.getAvatarImageFraming();
+        response.membershipTier = user.getMembershipTier();
+        response.membershipExpiresAt = user.getMembershipExpiresAt();
+        response.profileBio = user.getProfileBio();
+        response.profileLocation = user.getProfileLocation();
+        response.showCars = user.isShowCars();
+        response.showRaceHistory = user.isShowRaceHistory();
+        response.showPhotos = user.isShowPhotos();
 
         return response;
     }
@@ -214,14 +235,40 @@ public class UserService {
             String currentEmail,
             MultipartFile avatar) {
 
+        return updateCurrentUserAvatar(currentEmail, avatar, null);
+    }
+
+    public UserResponse updateCurrentUserAvatar(
+            String currentEmail,
+            MultipartFile avatar,
+            ImageFramingRequest framingRequest) {
+
         byte[] avatarData = validateAndReadAvatar(avatar);
 
         User user = getUserByEmail(currentEmail);
 
         user.setAvatarData(avatarData);
         user.setAvatarContentType(avatar.getContentType());
+        user.setProfilePhoto(null);
         user.setAvatarVersion(System.currentTimeMillis());
+        applyImageFramingForUpload(user, framingRequest);
 
+        return toResponse(userRepository.save(user));
+    }
+
+    public UserResponse updateCurrentUserAvatarFraming(
+            String currentEmail,
+            ImageFramingRequest framingRequest) {
+
+        User user = getUserByEmail(currentEmail);
+
+        if (user.getAvatarContentType() == null) {
+            throw new InvalidImageFramingException(
+                    "Upload an avatar before setting its framing"
+            );
+        }
+
+        applyImageFramingForUpdate(user, framingRequest);
         return toResponse(userRepository.save(user));
     }
 
@@ -231,6 +278,7 @@ public class UserService {
         user.setAvatarData(null);
         user.setAvatarContentType(null);
         user.setAvatarVersion(System.currentTimeMillis());
+        resetImageFraming(user);
 
         return toResponse(userRepository.save(user));
     }
@@ -309,7 +357,10 @@ public class UserService {
             );
         }
 
-        return avatarData;
+        return imageMetadataSanitizer.sanitize(
+                avatarData,
+                avatar.getContentType()
+        );
     }
 
     private boolean hasExpectedImageSignature(
@@ -353,6 +404,99 @@ public class UserService {
                 && data[9] == 'E'
                 && data[10] == 'B'
                 && data[11] == 'P';
+    }
+
+    private void applyImageFramingForUpload(
+            User user,
+            ImageFramingRequest request) {
+
+        if (request != null && request.hasExplicitProfiles()) {
+            validateAndApplyExplicitImageFraming(user, request);
+            return;
+        }
+
+        Integer focusX = request == null ? null : request.focusX;
+        Integer focusY = request == null ? null : request.focusY;
+        Integer cropPercent = request == null ? null : request.cropPercent;
+
+        validateAndApplyLegacyImageFraming(
+                user,
+                focusX == null ? 50 : focusX,
+                focusY == null ? 50 : focusY,
+                cropPercent == null ? 0 : cropPercent
+        );
+    }
+
+    private void applyImageFramingForUpdate(
+            User user,
+            ImageFramingRequest request) {
+
+        if (request != null && request.hasExplicitProfiles()) {
+            validateAndApplyExplicitImageFraming(user, request);
+            return;
+        }
+
+        validateAndApplyLegacyImageFraming(
+                user,
+                request == null ? null : request.focusX,
+                request == null ? null : request.focusY,
+                request == null ? null : request.cropPercent
+        );
+    }
+
+    private void validateAndApplyExplicitImageFraming(
+            User user,
+            ImageFramingRequest request) {
+
+        if (request.avatar == null || request.card == null) {
+            throw new InvalidImageFramingException(
+                    "Both avatar and card image framing profiles are required"
+            );
+        }
+
+        if (request.hasLegacyProfile()) {
+            throw new InvalidImageFramingException(
+                    "Use either avatar/card profiles or legacy image framing fields"
+            );
+        }
+
+        validateProfile(request.avatar);
+        validateProfile(request.card);
+
+        user.applyAvatarImageFraming(
+                request.avatar.focusX,
+                request.avatar.focusY,
+                request.avatar.cropPercent
+        );
+        user.applyCardImageFraming(
+                request.card.focusX,
+                request.card.focusY,
+                request.card.cropPercent
+        );
+    }
+
+    private void validateProfile(ImageFramingProfileRequest profile) {
+        imageFramingValidator.validate(
+                profile.focusX,
+                profile.focusY,
+                profile.cropPercent
+        );
+    }
+
+    private void validateAndApplyLegacyImageFraming(
+            User user,
+            Integer focusX,
+            Integer focusY,
+            Integer cropPercent) {
+
+        imageFramingValidator.validate(focusX, focusY, cropPercent);
+        user.applyAvatarImageFraming(focusX, focusY, cropPercent);
+        user.applyCardImageFraming(focusX, focusY, cropPercent);
+    }
+
+    private void resetImageFraming(User user) {
+        user.applyAvatarImageFraming(50, 50, 0);
+        user.applyCardImageFraming(50, 50, 0);
     }
 
     private String trimToNull(String value) {

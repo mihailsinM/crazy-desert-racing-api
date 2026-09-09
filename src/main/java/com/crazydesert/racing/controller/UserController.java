@@ -1,6 +1,7 @@
 package com.crazydesert.racing.controller;
 
 import com.crazydesert.racing.RaceCar;
+import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.UserAvatarResponse;
 import com.crazydesert.racing.dto.UserCreateRequest;
 import com.crazydesert.racing.dto.UserProfileUpdateRequest;
@@ -101,11 +102,42 @@ public class UserController {
     )
     public UserResponse updateCurrentUserAvatar(
             Authentication authentication,
-            @RequestParam("file") MultipartFile avatar) {
+            @RequestParam("file") MultipartFile avatar,
+            @RequestParam(required = false) Integer focusX,
+            @RequestParam(required = false) Integer focusY,
+            @RequestParam(required = false) Integer cropPercent,
+            @RequestParam(required = false) Integer avatarFocusX,
+            @RequestParam(required = false) Integer avatarFocusY,
+            @RequestParam(required = false) Integer avatarCropPercent,
+            @RequestParam(required = false) Integer cardFocusX,
+            @RequestParam(required = false) Integer cardFocusY,
+            @RequestParam(required = false) Integer cardCropPercent) {
 
         return userService.updateCurrentUserAvatar(
                 authentication.getName(),
-                avatar
+                avatar,
+                ImageFramingRequest.fromParameters(
+                        focusX,
+                        focusY,
+                        cropPercent,
+                        avatarFocusX,
+                        avatarFocusY,
+                        avatarCropPercent,
+                        cardFocusX,
+                        cardFocusY,
+                        cardCropPercent
+                )
+        );
+    }
+
+    @PutMapping("/users/me/avatar/framing")
+    public UserResponse updateCurrentUserAvatarFraming(
+            Authentication authentication,
+            @RequestBody ImageFramingRequest request) {
+
+        return userService.updateCurrentUserAvatarFraming(
+                authentication.getName(),
+                request
         );
     }
 
