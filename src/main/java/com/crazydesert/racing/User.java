@@ -102,6 +102,11 @@ public class User {
     @JoinColumn(name = "profile_photo_id")
     private UserPhoto profilePhoto;
 
+    @JsonIgnore
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "profile_card_photo_id")
+    private UserPhoto profileCardPhoto;
+
     @Enumerated(EnumType.STRING)
     private Role role;
 
@@ -191,6 +196,10 @@ public class User {
 
     public UserPhoto getProfilePhoto() {
         return profilePhoto;
+    }
+
+    public UserPhoto getProfileCardPhoto() {
+        return profileCardPhoto;
     }
 
     public Role getRole() {
@@ -289,6 +298,10 @@ public class User {
 
     public void setProfilePhoto(UserPhoto profilePhoto) {
         this.profilePhoto = profilePhoto;
+    }
+
+    public void setProfileCardPhoto(UserPhoto profileCardPhoto) {
+        this.profileCardPhoto = profileCardPhoto;
     }
 
     public void setRole(Role role) {

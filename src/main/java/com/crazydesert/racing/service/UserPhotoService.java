@@ -131,9 +131,9 @@ public class UserPhotoService {
         photo.setVisibility(request.visibility);
 
         if (request.visibility == UserPhotoVisibility.PRIVATE
-                && isProfilePhoto(user, photo)) {
-            user.setProfilePhoto(null);
-            userRepository.save(user);
+                && (isProfilePhoto(user, photo)
+                || isProfileCardPhoto(user, photo))) {
+            clearProfileReferences(user, photo);
         }
 
         return toPhotoResponse(user, userPhotoRepository.save(photo));
@@ -164,7 +164,32 @@ public class UserPhotoService {
             );
         }
 
+        // Preserve the previous profile image on the card when changing only
+        // the avatar of an account created before the two choices existed.
+        if (user.getProfileCardPhoto() == null
+                && user.getProfilePhoto() != null) {
+            user.setProfileCardPhoto(user.getProfilePhoto());
+        }
+
         user.setProfilePhoto(photo);
+        userRepository.save(user);
+        return toPhotoResponse(user, photo);
+    }
+
+    public UserPhotoResponse setProfileCardPhoto(
+            String currentEmail,
+            Long photoId) {
+
+        User user = requireUser(currentEmail);
+        UserPhoto photo = requireOwnedPhoto(photoId, user);
+
+        if (photo.getVisibility() == UserPhotoVisibility.PRIVATE) {
+            throw new InvalidUserPhotoException(
+                    "A private photo cannot be used as the profile card"
+            );
+        }
+
+        user.setProfileCardPhoto(photo);
         userRepository.save(user);
         return toPhotoResponse(user, photo);
     }
@@ -185,10 +210,7 @@ public class UserPhotoService {
         User owner = photo.getOwner();
         photo.setVisibility(UserPhotoVisibility.PRIVATE);
 
-        if (isProfilePhoto(owner, photo)) {
-            owner.setProfilePhoto(null);
-            userRepository.save(owner);
-        }
+        clearProfileReferences(owner, photo);
 
         return toPhotoResponse(owner, userPhotoRepository.save(photo));
     }
@@ -201,10 +223,7 @@ public class UserPhotoService {
     private void deletePhoto(UserPhoto photo) {
         User user = photo.getOwner();
 
-        if (isProfilePhoto(user, photo)) {
-            user.setProfilePhoto(null);
-            userRepository.save(user);
-        }
+        clearProfileReferences(user, photo);
 
         userPhotoReportRepository.deleteByPhotoId(photo.getId());
         userPhotoRepository.delete(photo);
@@ -354,7 +373,37 @@ public class UserPhotoService {
                 );
     }
 
+    private boolean isProfileCardPhoto(User user, UserPhoto photo) {
+        return user.getProfileCardPhoto() != null
+                && Objects.equals(
+                        user.getProfileCardPhoto().getId(),
+                        photo.getId()
+                );
+    }
+
+    private void clearProfileReferences(User user, UserPhoto photo) {
+        boolean changed = false;
+
+        if (isProfilePhoto(user, photo)) {
+            user.setProfilePhoto(null);
+            changed = true;
+        }
+
+        if (isProfileCardPhoto(user, photo)) {
+            user.setProfileCardPhoto(null);
+            changed = true;
+        }
+
+        if (changed) {
+            userRepository.save(user);
+        }
+    }
+
     private UserPhotoResponse toPhotoResponse(User owner, UserPhoto photo) {
+        UserPhoto cardPhoto = owner.getProfileCardPhoto() == null
+                ? owner.getProfilePhoto()
+                : owner.getProfileCardPhoto();
+
         return new UserPhotoResponse(
                 photo.getId(),
                 "/driver-photos/"
@@ -365,6 +414,8 @@ public class UserPhotoService {
                 photo.getVisibility(),
                 photo.getCreatedAt(),
                 isProfilePhoto(owner, photo),
+                cardPhoto != null
+                        && Objects.equals(cardPhoto.getId(), photo.getId()),
                 photo.getImageFraming()
         );
     }

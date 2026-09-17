@@ -112,6 +112,30 @@ class DriverServiceTest {
     }
 
     @Test
+    void cardAndAvatarCanUseDifferentVisiblePhotos() {
+        User viewer = user(1L, "viewer@example.com");
+        User driver = user(2L, "driver@example.com");
+        driver.setProfilePhoto(photo(10L, driver));
+        driver.setProfileCardPhoto(photo(11L, driver));
+
+        when(userRepository.findByEmail("viewer@example.com"))
+                .thenReturn(Optional.of(viewer));
+        when(userRepository.findById(2L)).thenReturn(Optional.of(driver));
+        when(userPhotoRepository.findByOwnerIdAndVisibilityInOrderByCreatedAtDesc(
+                org.mockito.ArgumentMatchers.eq(2L),
+                org.mockito.ArgumentMatchers.any()
+        )).thenReturn(List.of());
+
+        DriverProfileResponse response = driverService.getDriver(
+                2L,
+                "viewer@example.com"
+        );
+
+        assertEquals("/driver-photos/10/image?v=1", response.avatarUrl());
+        assertEquals("/driver-photos/11/image?v=1", response.cardImageUrl());
+    }
+
+    @Test
     void updatesOnlyPublicProfilePreferences() {
         User driver = user(2L, "driver@example.com");
         PublicProfileUpdateRequest request = new PublicProfileUpdateRequest();
