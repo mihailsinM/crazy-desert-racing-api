@@ -5,6 +5,7 @@ import com.crazydesert.racing.UserPhoto;
 import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.MediaImageResponse;
 import com.crazydesert.racing.dto.UserPhotoReportRequest;
+import com.crazydesert.racing.dto.UserPhotoUpdateRequest;
 import com.crazydesert.racing.enums.Role;
 import com.crazydesert.racing.enums.UserPhotoReportReason;
 import com.crazydesert.racing.enums.UserPhotoVisibility;
@@ -26,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -152,6 +155,81 @@ class UserPhotoServiceTest {
                 )
         );
         verify(userRepository, never()).save(owner);
+    }
+
+    @Test
+    void selectingAvatarKeepsPreviousPhotoOnCard() {
+        User owner = user(1L, "owner@example.com");
+        UserPhoto oldAvatar = photo(10L, owner, UserPhotoVisibility.PUBLIC);
+        UserPhoto newAvatar = photo(11L, owner, UserPhotoVisibility.PUBLIC);
+        owner.setProfilePhoto(oldAvatar);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+        when(userPhotoRepository.findById(11L))
+                .thenReturn(Optional.of(newAvatar));
+
+        userPhotoService.setProfilePhoto("owner@example.com", 11L);
+
+        assertEquals(newAvatar, owner.getProfilePhoto());
+        assertEquals(oldAvatar, owner.getProfileCardPhoto());
+        verify(userRepository).save(owner);
+    }
+
+    @Test
+    void selectingCardDoesNotChangeAvatarAndRejectsPrivatePhoto() {
+        User owner = user(1L, "owner@example.com");
+        UserPhoto avatar = photo(10L, owner, UserPhotoVisibility.MEMBERS_ONLY);
+        UserPhoto card = photo(11L, owner, UserPhotoVisibility.PUBLIC);
+        UserPhoto privatePhoto = photo(12L, owner, UserPhotoVisibility.PRIVATE);
+        owner.setProfilePhoto(avatar);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+        when(userPhotoRepository.findById(11L))
+                .thenReturn(Optional.of(card));
+        when(userPhotoRepository.findById(12L))
+                .thenReturn(Optional.of(privatePhoto));
+
+        userPhotoService.setProfileCardPhoto("owner@example.com", 11L);
+
+        assertEquals(avatar, owner.getProfilePhoto());
+        assertEquals(card, owner.getProfileCardPhoto());
+        assertThrows(
+                InvalidUserPhotoException.class,
+                () -> userPhotoService.setProfileCardPhoto(
+                        "owner@example.com",
+                        12L
+                )
+        );
+        assertEquals(card, owner.getProfileCardPhoto());
+    }
+
+    @Test
+    void hidingSelectedCardClearsCardWithoutClearingAvatar() {
+        User owner = user(1L, "owner@example.com");
+        UserPhoto avatar = photo(10L, owner, UserPhotoVisibility.PUBLIC);
+        UserPhoto card = photo(11L, owner, UserPhotoVisibility.PUBLIC);
+        owner.setProfilePhoto(avatar);
+        owner.setProfileCardPhoto(card);
+
+        when(userRepository.findByEmail("owner@example.com"))
+                .thenReturn(Optional.of(owner));
+        when(userPhotoRepository.findById(11L))
+                .thenReturn(Optional.of(card));
+        when(userPhotoRepository.save(card)).thenReturn(card);
+
+        UserPhotoUpdateRequest request = new UserPhotoUpdateRequest();
+        request.visibility = UserPhotoVisibility.PRIVATE;
+
+        userPhotoService.updatePhoto(
+                "owner@example.com",
+                11L,
+                request
+        );
+
+        assertEquals(avatar, owner.getProfilePhoto());
+        assertNull(owner.getProfileCardPhoto());
     }
 
     @Test

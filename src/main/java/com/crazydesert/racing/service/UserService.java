@@ -249,6 +249,10 @@ public class UserService {
 
         user.setAvatarData(avatarData);
         user.setAvatarContentType(avatar.getContentType());
+        if (user.getProfileCardPhoto() == null
+                && user.getProfilePhoto() != null) {
+            user.setProfileCardPhoto(user.getProfilePhoto());
+        }
         user.setProfilePhoto(null);
         user.setAvatarVersion(System.currentTimeMillis());
         applyImageFramingForUpload(user, framingRequest);

@@ -10,6 +10,8 @@ public record DriverProfileResponse(
         String name,
         String avatarUrl,
         ImageFramingProfilesResponse imageFraming,
+        String cardImageUrl,
+        ImageFramingProfilesResponse cardImageFraming,
         Role role,
         boolean verifiedDriver,
         MembershipTier membershipTier,

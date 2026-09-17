@@ -11,5 +11,6 @@ public record UserPhotoResponse(
         UserPhotoVisibility visibility,
         LocalDateTime createdAt,
         boolean profilePhoto,
+        boolean cardProfilePhoto,
         ImageFramingProfilesResponse imageFraming) {
 }

@@ -122,6 +122,17 @@ public class UserPhotoController {
         );
     }
 
+    @PutMapping("/users/me/photos/{photoId}/card-profile")
+    public UserPhotoResponse setProfileCardPhoto(
+            Authentication authentication,
+            @PathVariable Long photoId) {
+
+        return userPhotoService.setProfileCardPhoto(
+                authentication.getName(),
+                photoId
+        );
+    }
+
     @DeleteMapping("/users/me/photos/{photoId}")
     public ResponseEntity<Void> deletePhoto(
             Authentication authentication,

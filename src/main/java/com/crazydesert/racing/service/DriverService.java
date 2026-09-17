@@ -130,6 +130,7 @@ public class DriverService {
 
     private DriverProfileResponse toProfile(User user, boolean ownerView) {
         UserPhoto profilePhoto = visibleProfilePhoto(user, ownerView);
+        UserPhoto cardPhoto = visibleCardPhoto(user, ownerView, profilePhoto);
         boolean showCars = ownerView || user.isShowCars();
         boolean showRaces = ownerView || user.isShowRaceHistory();
         boolean showPhotos = ownerView || user.isShowPhotos();
@@ -163,6 +164,8 @@ public class DriverService {
                 user.getName(),
                 buildAvatarUrl(user, profilePhoto),
                 getAvatarFraming(user, profilePhoto),
+                buildAvatarUrl(user, cardPhoto),
+                getAvatarFraming(user, cardPhoto),
                 user.getRole(),
                 user.isLicenseVerified(),
                 getActiveMembershipTier(user),
@@ -224,6 +227,9 @@ public class DriverService {
 
     private UserPhotoResponse toPhotoResponse(User owner, UserPhoto photo) {
         UserPhoto profilePhoto = owner.getProfilePhoto();
+        UserPhoto cardPhoto = owner.getProfileCardPhoto() == null
+                ? profilePhoto
+                : owner.getProfileCardPhoto();
 
         return new UserPhotoResponse(
                 photo.getId(),
@@ -233,6 +239,8 @@ public class DriverService {
                 photo.getCreatedAt(),
                 profilePhoto != null
                         && Objects.equals(profilePhoto.getId(), photo.getId()),
+                cardPhoto != null
+                        && Objects.equals(cardPhoto.getId(), photo.getId()),
                 photo.getImageFraming()
         );
     }
@@ -247,6 +255,23 @@ public class DriverService {
         }
 
         return profilePhoto;
+    }
+
+    private UserPhoto visibleCardPhoto(
+            User user,
+            boolean ownerView,
+            UserPhoto fallbackPhoto) {
+
+        UserPhoto cardPhoto = user.getProfileCardPhoto();
+
+        if (cardPhoto == null) {
+            return fallbackPhoto;
+        }
+
+        return !ownerView
+                && cardPhoto.getVisibility() == UserPhotoVisibility.PRIVATE
+                ? null
+                : cardPhoto;
     }
 
     private String buildAvatarUrl(User user, UserPhoto profilePhoto) {
