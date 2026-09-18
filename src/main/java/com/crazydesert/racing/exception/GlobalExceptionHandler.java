@@ -180,6 +180,17 @@ public class GlobalExceptionHandler {
         return error;
     }
 
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ExceptionHandler(ProtectedAccountException.class)
+    public Map<String, String> handleProtectedAccountException(
+            ProtectedAccountException ex) {
+
+        Map<String, String> error = new HashMap<>();
+        error.put("message", ex.getMessage());
+
+        return error;
+    }
+
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(DuplicateUserPhotoReportException.class)
     public Map<String, String> handleDuplicateUserPhotoReportException(
