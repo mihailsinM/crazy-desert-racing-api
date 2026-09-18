@@ -11,8 +11,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.annotation.Order;
 
 @Component
+@Order(10)
 @ConditionalOnProperty(
         name = "crazy.super-admin.enabled",
         havingValue = "true"
