@@ -15,6 +15,7 @@ import com.crazydesert.racing.exception.UserPhotoAccessDeniedException;
 import com.crazydesert.racing.repository.UserPhotoReportRepository;
 import com.crazydesert.racing.repository.UserPhotoRepository;
 import com.crazydesert.racing.repository.UserRepository;
+import com.crazydesert.racing.repository.RaceCarRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -50,6 +51,9 @@ class UserPhotoServiceTest {
     @Mock
     private MediaImageService mediaImageService;
 
+    @Mock
+    private RaceCarRepository raceCarRepository;
+
     private UserPhotoService userPhotoService;
 
     @BeforeEach
@@ -59,7 +63,8 @@ class UserPhotoServiceTest {
                 userPhotoRepository,
                 userPhotoReportRepository,
                 mediaImageService,
-                new ImageFramingValidator(new ImageFocusValidator())
+                new ImageFramingValidator(new ImageFocusValidator()),
+                raceCarRepository
         );
     }
 

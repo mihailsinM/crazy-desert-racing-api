@@ -4,6 +4,7 @@ import com.crazydesert.racing.MediaImage;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.UserPhoto;
 import com.crazydesert.racing.UserPhotoReport;
+import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.dto.ImageFramingProfileRequest;
 import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.MediaImageResponse;
@@ -25,6 +26,7 @@ import com.crazydesert.racing.exception.UserPhotoNotFoundException;
 import com.crazydesert.racing.repository.UserPhotoReportRepository;
 import com.crazydesert.racing.repository.UserPhotoRepository;
 import com.crazydesert.racing.repository.UserRepository;
+import com.crazydesert.racing.repository.RaceCarRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -44,19 +46,22 @@ public class UserPhotoService {
     private final UserPhotoReportRepository userPhotoReportRepository;
     private final MediaImageService mediaImageService;
     private final ImageFramingValidator imageFramingValidator;
+    private final RaceCarRepository raceCarRepository;
 
     public UserPhotoService(
             UserRepository userRepository,
             UserPhotoRepository userPhotoRepository,
             UserPhotoReportRepository userPhotoReportRepository,
             MediaImageService mediaImageService,
-            ImageFramingValidator imageFramingValidator) {
+            ImageFramingValidator imageFramingValidator,
+            RaceCarRepository raceCarRepository) {
 
         this.userRepository = userRepository;
         this.userPhotoRepository = userPhotoRepository;
         this.userPhotoReportRepository = userPhotoReportRepository;
         this.mediaImageService = mediaImageService;
         this.imageFramingValidator = imageFramingValidator;
+        this.raceCarRepository = raceCarRepository;
     }
 
     @Transactional(readOnly = true)
@@ -67,6 +72,28 @@ public class UserPhotoService {
                 .findByOwnerIdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(photo -> toPhotoResponse(user, photo))
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<UserPhotoResponse> getRaceCarPhotos(
+            String viewerEmail,
+            Long raceCarId) {
+
+        User viewer = requireUser(viewerEmail);
+        RaceCar raceCar = raceCarRepository.findById(raceCarId)
+                .orElseThrow(() -> new com.crazydesert.racing.exception.RaceCarNotFoundException(
+                        "Race car with id " + raceCarId + " not found"
+                ));
+
+        User carOwner = raceCar.getOwner();
+        boolean canManage = carOwner != null
+                && (Objects.equals(carOwner.getId(), viewer.getId())
+                || viewer.getRole().hasAdminAccess());
+
+        return raceCar.getGalleryPhotos().stream()
+                .filter(photo -> canManage || canView(photo, viewer))
+                .map(photo -> toPhotoResponse(photo.getOwner(), photo))
                 .toList();
     }
 
@@ -224,6 +251,17 @@ public class UserPhotoService {
         User user = photo.getOwner();
 
         clearProfileReferences(user, photo);
+
+        List<RaceCar> linkedCars = new java.util.ArrayList<>(
+                raceCarRepository.findByGalleryPhotoId(photo.getId())
+        );
+        raceCarRepository.findDistinctByGalleryPhotosId(photo.getId())
+                .stream()
+                .filter(car -> linkedCars.stream().noneMatch(existing ->
+                        Objects.equals(existing.getId(), car.getId())))
+                .forEach(linkedCars::add);
+        linkedCars.forEach(car -> car.removeGalleryPhoto(photo));
+        raceCarRepository.saveAll(linkedCars);
 
         userPhotoReportRepository.deleteByPhotoId(photo.getId());
         userPhotoRepository.delete(photo);

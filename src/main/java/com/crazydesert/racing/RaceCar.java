@@ -6,6 +6,10 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
 @Entity
 @Table(name = "race_cars")
 public class RaceCar {
@@ -60,6 +64,21 @@ public class RaceCar {
     @Column(name = "image_version")
     private Long imageVersion;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
+    @JoinColumn(name = "gallery_photo_id")
+    private UserPhoto galleryPhoto;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "race_car_gallery_photos",
+            joinColumns = @JoinColumn(name = "race_car_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_photo_id")
+    )
+    @OrderBy("createdAt DESC")
+    @JsonIgnore
+    private Set<UserPhoto> galleryPhotos = new LinkedHashSet<>();
+
     @ManyToOne
     @JsonBackReference
     @JoinColumn(name = "user_id")
@@ -82,6 +101,10 @@ public class RaceCar {
     }
 
     public String getImageUrl() {
+        if (galleryPhoto != null) {
+            return "/driver-photos/" + galleryPhoto.getId() + "/image";
+        }
+
         if (imageKey != null) {
             return "/media/images/"
                     + imageKey
@@ -97,6 +120,10 @@ public class RaceCar {
     }
 
     public ImageFramingProfilesResponse getImageFraming() {
+        if (galleryPhoto != null) {
+            return galleryPhoto.getImageFraming();
+        }
+
         ImageFraming card = getOrCreateCardImageFraming();
         ImageFraming avatar = getEffectiveAvatarImageFraming(card);
 
@@ -107,15 +134,15 @@ public class RaceCar {
     }
 
     public int getImageFocusX() {
-        return getOrCreateCardImageFraming().getFocusX();
+        return getImageFraming().card().focusX();
     }
 
     public int getImageFocusY() {
-        return getOrCreateCardImageFraming().getFocusY();
+        return getImageFraming().card().focusY();
     }
 
     public int getImageCropPercent() {
-        return getOrCreateCardImageFraming().getCropPercent();
+        return getImageFraming().card().cropPercent();
     }
 
     @JsonIgnore
@@ -194,6 +221,56 @@ public class RaceCar {
         this.imageVersion = imageVersion;
     }
 
+    public UserPhoto getGalleryPhoto() {
+        return galleryPhoto;
+    }
+
+    public void setGalleryPhoto(UserPhoto galleryPhoto) {
+        this.galleryPhoto = galleryPhoto;
+        if (galleryPhoto != null) {
+            getGalleryPhotos().add(galleryPhoto);
+        }
+    }
+
+    @JsonIgnore
+    public Set<UserPhoto> getGalleryPhotos() {
+        if (galleryPhotos == null) {
+            galleryPhotos = new LinkedHashSet<>();
+        }
+        if (galleryPhoto != null) {
+            galleryPhotos.add(galleryPhoto);
+        }
+
+        return galleryPhotos;
+    }
+
+    public List<Long> getGalleryPhotoIds() {
+        LinkedHashSet<Long> ids = new LinkedHashSet<>();
+        if (galleryPhoto != null) {
+            ids.add(galleryPhoto.getId());
+        }
+        getGalleryPhotos().stream()
+                .map(UserPhoto::getId)
+                .forEach(ids::add);
+        return List.copyOf(ids);
+    }
+
+    public void removeGalleryPhoto(UserPhoto photo) {
+        boolean removingCover = galleryPhoto != null
+                && galleryPhoto.getId().equals(photo.getId());
+        if (removingCover) {
+            galleryPhoto = null;
+        }
+
+        getGalleryPhotos().removeIf(item ->
+                item.getId() != null && item.getId().equals(photo.getId())
+        );
+
+        if (removingCover) {
+            galleryPhoto = getGalleryPhotos().stream().findFirst().orElse(null);
+        }
+    }
+
     public void setOwner(User owner) {
         this.owner = owner;
     }
@@ -201,6 +278,7 @@ public class RaceCar {
     @JsonIgnore
     public boolean hasImage() {
         return imageKey != null
+                || galleryPhoto != null
                 || (imageUrl != null && !imageUrl.isBlank());
     }
 

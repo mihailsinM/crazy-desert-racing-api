@@ -4,7 +4,9 @@ import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
 import com.crazydesert.racing.dto.RaceCarUpdateRequest;
+import com.crazydesert.racing.dto.UserPhotoResponse;
 import com.crazydesert.racing.service.RaceCarService;
+import com.crazydesert.racing.service.UserPhotoService;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +21,13 @@ import java.util.List;
 public class RaceCarController {
 
     private final RaceCarService raceCarService;
+    private final UserPhotoService userPhotoService;
 
-    public RaceCarController(RaceCarService raceCarService){
+    public RaceCarController(
+            RaceCarService raceCarService,
+            UserPhotoService userPhotoService){
         this.raceCarService = raceCarService;
+        this.userPhotoService = userPhotoService;
     }
 
     @PostMapping
@@ -130,6 +136,30 @@ public class RaceCarController {
             Authentication authentication) {
 
         return raceCarService.deleteRaceCarImage(
+                authentication.getName(),
+                id
+        );
+    }
+
+    @PutMapping("/{id}/gallery-photo/{photoId}")
+    public RaceCar useGalleryPhoto(
+            @PathVariable Long id,
+            @PathVariable Long photoId,
+            Authentication authentication) {
+
+        return raceCarService.useGalleryPhoto(
+                authentication.getName(),
+                id,
+                photoId
+        );
+    }
+
+    @GetMapping("/{id}/gallery")
+    public List<UserPhotoResponse> getRaceCarGallery(
+            @PathVariable Long id,
+            Authentication authentication) {
+
+        return userPhotoService.getRaceCarPhotos(
                 authentication.getName(),
                 id
         );

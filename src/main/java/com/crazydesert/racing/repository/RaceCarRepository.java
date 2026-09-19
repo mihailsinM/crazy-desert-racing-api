@@ -9,5 +9,9 @@ public interface RaceCarRepository extends JpaRepository <RaceCar, Long>{
 
     List<RaceCar> findByOwnerId(Long ownerId);
 
+    List<RaceCar> findByGalleryPhotoId(Long photoId);
+
+    List<RaceCar> findDistinctByGalleryPhotosId(Long photoId);
+
     long countByOwnerId(Long ownerId);
 }
