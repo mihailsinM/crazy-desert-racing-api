@@ -229,7 +229,7 @@ public class RaceCarService {
     }
 
     private void validateCanManageRaceCar(User currentUser, RaceCar raceCar) {
-        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+        boolean isAdmin = currentUser.getRole().hasAdminAccess();
         boolean isOwner = raceCar.getOwner() != null
                 && raceCar.getOwner().getId().equals(currentUser.getId());
 

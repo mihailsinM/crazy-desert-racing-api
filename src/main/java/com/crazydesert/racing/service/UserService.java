@@ -15,6 +15,7 @@ import com.crazydesert.racing.exception.AvatarStorageException;
 import com.crazydesert.racing.exception.EmailAlreadyInUseException;
 import com.crazydesert.racing.exception.InvalidAvatarException;
 import com.crazydesert.racing.exception.InvalidImageFramingException;
+import com.crazydesert.racing.exception.ProtectedAccountException;
 import com.crazydesert.racing.exception.UserNotFoundException;
 import com.crazydesert.racing.repository.RaceCarRepository;
 import com.crazydesert.racing.repository.UserRepository;
@@ -119,13 +120,14 @@ public class UserService {
     }
 
     public void deleteUserById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() ->
+                        new UserNotFoundException(
+                                "User with id " + id + " not found"
+                        ));
 
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException(
-                    "User with id " + id + " not found"
-            );
-        }
-        userRepository.deleteById(id);
+        ensureAccountIsNotProtected(user);
+        userRepository.delete(user);
     }
 
     public UserResponse getUserById(Long id) {
@@ -145,6 +147,8 @@ public class UserService {
                         new UserNotFoundException(
                                 "User with id " + id + " not found"
                         ));
+
+        ensureAccountIsNotProtected(existingUser);
 
         String email = request.email.trim();
 
@@ -196,6 +200,14 @@ public class UserService {
         User savedUser = userRepository.save(user);
 
         return toResponse(savedUser);
+    }
+
+    private void ensureAccountIsNotProtected(User user) {
+        if (user.getRole() == Role.SUPER_ADMIN) {
+            throw new ProtectedAccountException(
+                    "The super administrator account cannot be changed or deleted"
+            );
+        }
     }
 
     public UserResponse getCurrentUser(String email) {

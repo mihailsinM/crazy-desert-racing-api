@@ -351,7 +351,7 @@ public class UserPhotoService {
     private User requireAdmin(String email) {
         User user = requireUser(email);
 
-        if (user.getRole() != Role.ADMIN) {
+        if (!user.getRole().hasAdminAccess()) {
             throw new UserPhotoAccessDeniedException(
                     "Administrator access is required"
             );
