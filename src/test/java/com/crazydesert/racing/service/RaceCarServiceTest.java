@@ -4,6 +4,7 @@ import com.crazydesert.racing.ImageFraming;
 import com.crazydesert.racing.MediaImage;
 import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
+import com.crazydesert.racing.UserPhoto;
 import com.crazydesert.racing.dto.ImageFramingProfileRequest;
 import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
@@ -15,6 +16,7 @@ import com.crazydesert.racing.exception.InvalidImageFocusException;
 import com.crazydesert.racing.exception.RaceCarOwnershipException;
 import com.crazydesert.racing.repository.RaceCarRepository;
 import com.crazydesert.racing.repository.UserRepository;
+import com.crazydesert.racing.repository.UserPhotoRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +26,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -45,6 +48,9 @@ class RaceCarServiceTest {
     @Mock
     private MediaImageService mediaImageService;
 
+    @Mock
+    private UserPhotoRepository userPhotoRepository;
+
     private RaceCarService raceCarService;
 
     @BeforeEach
@@ -56,8 +62,76 @@ class RaceCarServiceTest {
                 raceCarRepository,
                 userRepository,
                 new ImageFramingValidator(imageFocusValidator),
-                mediaImageService
+                mediaImageService,
+                userPhotoRepository
         );
+    }
+
+    @Test
+    void assignsOwnedGalleryPhotoWithoutDuplicatingImage() {
+        User owner = createUser(1L, "owner@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        raceCar.setImageKey("old-car-image");
+        UserPhoto photo = new UserPhoto();
+        ReflectionTestUtils.setField(photo, "id", 25L);
+        photo.setOwner(owner);
+        photo.applyAvatarImageFraming(20, 30, 10);
+        photo.applyCardImageFraming(60, 70, 5);
+
+        when(userRepository.findByEmail(owner.getEmail()))
+                .thenReturn(Optional.of(owner));
+        when(raceCarRepository.findById(10L))
+                .thenReturn(Optional.of(raceCar));
+        when(userPhotoRepository.findById(25L))
+                .thenReturn(Optional.of(photo));
+        when(raceCarRepository.saveAndFlush(raceCar)).thenReturn(raceCar);
+
+        RaceCar updated = raceCarService.useGalleryPhoto(
+                owner.getEmail(),
+                10L,
+                25L
+        );
+
+        assertEquals("/driver-photos/25/image", updated.getImageUrl());
+        assertEquals(List.of(25L), updated.getGalleryPhotoIds());
+        assertFraming(updated, 20, 30, 10, 60, 70, 5);
+
+        photo.applyCardImageFraming(85, 15, 35);
+        assertFraming(updated, 20, 30, 10, 85, 15, 35);
+
+        UserPhoto secondPhoto = new UserPhoto();
+        ReflectionTestUtils.setField(secondPhoto, "id", 26L);
+        secondPhoto.setOwner(owner);
+        secondPhoto.applyCardImageFraming(40, 45, 15);
+        updated.setGalleryPhoto(secondPhoto);
+
+        assertEquals(List.of(26L, 25L), updated.getGalleryPhotoIds());
+        assertEquals("/driver-photos/26/image", updated.getImageUrl());
+        assertEquals(40, updated.getImageFraming().card().focusX());
+        verify(mediaImageService).deleteImage("old-car-image");
+    }
+
+    @Test
+    void rejectsGalleryPhotoOwnedByAnotherUser() {
+        User owner = createUser(1L, "owner@example.com");
+        User otherUser = createUser(2L, "other@example.com");
+        RaceCar raceCar = createRaceCar(owner, 50, 50);
+        UserPhoto photo = new UserPhoto();
+        ReflectionTestUtils.setField(photo, "id", 25L);
+        photo.setOwner(otherUser);
+
+        when(userRepository.findByEmail(owner.getEmail()))
+                .thenReturn(Optional.of(owner));
+        when(raceCarRepository.findById(10L))
+                .thenReturn(Optional.of(raceCar));
+        when(userPhotoRepository.findById(25L))
+                .thenReturn(Optional.of(photo));
+
+        assertThrows(
+                RaceCarOwnershipException.class,
+                () -> raceCarService.useGalleryPhoto(owner.getEmail(), 10L, 25L)
+        );
+        verifyNoInteractions(mediaImageService);
     }
 
     @Test

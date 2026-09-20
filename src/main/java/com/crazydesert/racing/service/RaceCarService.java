@@ -4,6 +4,7 @@ package com.crazydesert.racing.service;
 import com.crazydesert.racing.ImageFraming;
 import com.crazydesert.racing.RaceCar;
 import com.crazydesert.racing.User;
+import com.crazydesert.racing.UserPhoto;
 import com.crazydesert.racing.dto.ImageFramingProfileRequest;
 import com.crazydesert.racing.dto.ImageFramingRequest;
 import com.crazydesert.racing.dto.RaceCarCreateRequest;
@@ -14,7 +15,9 @@ import com.crazydesert.racing.exception.InvalidImageFramingException;
 import com.crazydesert.racing.exception.RaceCarNotFoundException;
 import com.crazydesert.racing.exception.RaceCarOwnershipException;
 import com.crazydesert.racing.exception.UserNotFoundException;
+import com.crazydesert.racing.exception.UserPhotoNotFoundException;
 import com.crazydesert.racing.repository.RaceCarRepository;
+import com.crazydesert.racing.repository.UserPhotoRepository;
 import com.crazydesert.racing.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,16 +33,19 @@ public class RaceCarService {
     private final UserRepository userRepository;
     private final ImageFramingValidator imageFramingValidator;
     private final MediaImageService mediaImageService;
+    private final UserPhotoRepository userPhotoRepository;
 
     public RaceCarService(
             RaceCarRepository raceCarRepository,
             UserRepository userRepository,
             ImageFramingValidator imageFramingValidator,
-            MediaImageService mediaImageService) {
+            MediaImageService mediaImageService,
+            UserPhotoRepository userPhotoRepository) {
         this.raceCarRepository = raceCarRepository;
         this.userRepository = userRepository;
         this.imageFramingValidator = imageFramingValidator;
         this.mediaImageService = mediaImageService;
+        this.userPhotoRepository = userPhotoRepository;
     }
 
     public RaceCar assignCarToUser(Long userId, Long raceCarId) {
@@ -166,6 +172,7 @@ public class RaceCarService {
             ImageFramingRequest imageFramingRequest) {
 
         RaceCar raceCar = getManagedRaceCar(currentUserEmail, id);
+        raceCar.setGalleryPhoto(null);
 
         applyImageFramingForUpload(
                 raceCar,
@@ -212,11 +219,47 @@ public class RaceCarService {
         raceCar.setImageKey(null);
         raceCar.setImageVersion(System.currentTimeMillis());
         raceCar.setImageUrl(null);
+        raceCar.setGalleryPhoto(null);
         resetImageFraming(raceCar);
 
         RaceCar savedRaceCar = raceCarRepository.saveAndFlush(raceCar);
         mediaImageService.deleteImage(imageKey);
 
+        return savedRaceCar;
+    }
+
+    public RaceCar useGalleryPhoto(
+            String currentUserEmail,
+            Long raceCarId,
+            Long photoId) {
+
+        User currentUser = getUserByEmail(currentUserEmail);
+        RaceCar raceCar = raceCarRepository.findById(raceCarId)
+                .orElseThrow(() -> new RaceCarNotFoundException(
+                        "Race car with id " + raceCarId + " not found"
+                ));
+        validateCanManageRaceCar(currentUser, raceCar);
+
+        UserPhoto photo = userPhotoRepository.findById(photoId)
+                .orElseThrow(() -> new UserPhotoNotFoundException(
+                        "Photo with id " + photoId + " not found"
+                ));
+
+        boolean ownsPhoto = photo.getOwner() != null
+                && photo.getOwner().getId().equals(currentUser.getId());
+        if (!ownsPhoto) {
+            throw new RaceCarOwnershipException(
+                    "You can use only your own gallery photos"
+            );
+        }
+
+        String previousImageKey = raceCar.getImageKey();
+        raceCar.setGalleryPhoto(photo);
+        raceCar.setImageKey(null);
+        raceCar.setImageVersion(System.currentTimeMillis());
+        raceCar.setImageUrl(null);
+        RaceCar savedRaceCar = raceCarRepository.saveAndFlush(raceCar);
+        mediaImageService.deleteImage(previousImageKey);
         return savedRaceCar;
     }
 
