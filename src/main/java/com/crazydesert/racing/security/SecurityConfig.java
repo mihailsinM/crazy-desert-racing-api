@@ -65,6 +65,8 @@ public class SecurityConfig {
                         .requestMatchers("/users/me/**").authenticated()
                         .requestMatchers("/drivers/**").authenticated()
                         .requestMatchers("/driver-photos/**").authenticated()
+                        .requestMatchers("/chat/admin/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/chat/**").authenticated()
                         .requestMatchers("/admin/photo-reports/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .requestMatchers("/admin/user-photos/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
