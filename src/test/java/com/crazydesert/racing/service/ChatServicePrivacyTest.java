@@ -3,6 +3,7 @@ package com.crazydesert.racing.service;
 import com.crazydesert.racing.ChatConversation;
 import com.crazydesert.racing.User;
 import com.crazydesert.racing.enums.ChatConversationType;
+import com.crazydesert.racing.enums.ChatSupportTopic;
 import com.crazydesert.racing.enums.Role;
 import com.crazydesert.racing.exception.ChatAccessDeniedException;
 import com.crazydesert.racing.repository.ChatBlockRepository;
@@ -106,6 +107,20 @@ class ChatServicePrivacyTest {
                 List.of(),
                 chatService.getMessages("admin@example.com", 20L, null)
         );
+    }
+
+    @Test
+    void supportOwnerCanSetTopicVisibleToAdministrators() {
+        User owner = user(1L, "owner@example.com", Role.USER);
+        ChatConversation conversation = supportConversation(20L, owner);
+        when(userRepository.findByEmail("owner@example.com")).thenReturn(Optional.of(owner));
+        when(conversationRepository.findByTypeAndSupportOwnerId(ChatConversationType.SUPPORT, 1L))
+                .thenReturn(Optional.of(conversation));
+        when(conversationRepository.save(conversation)).thenReturn(conversation);
+
+        assertEquals(ChatSupportTopic.MARKETPLACE,
+                chatService.updateSupportTopic("owner@example.com", ChatSupportTopic.MARKETPLACE).supportTopic());
+        assertEquals(ChatSupportTopic.MARKETPLACE, conversation.getSupportTopic());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.crazydesert.racing;
 
 import com.crazydesert.racing.enums.ChatConversationType;
+import com.crazydesert.racing.enums.ChatSupportTopic;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -26,6 +27,10 @@ public class ChatConversation {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ChatConversationType type;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "support_topic", length = 30)
+    private ChatSupportTopic supportTopic;
 
     @Column(name = "conversation_key", nullable = false, unique = true, length = 80)
     private String conversationKey;
@@ -54,6 +59,15 @@ public class ChatConversation {
 
     public ChatConversationType getType() {
         return type;
+    }
+
+    public ChatSupportTopic getSupportTopic() {
+        return type == ChatConversationType.SUPPORT && supportTopic == null
+                ? ChatSupportTopic.GENERAL : supportTopic;
+    }
+
+    public void setSupportTopic(ChatSupportTopic supportTopic) {
+        this.supportTopic = supportTopic;
     }
 
     public String getConversationKey() {

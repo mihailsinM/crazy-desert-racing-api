@@ -17,6 +17,7 @@ import com.crazydesert.racing.dto.ChatUnreadResponse;
 import com.crazydesert.racing.dto.ImageFramingProfilesResponse;
 import com.crazydesert.racing.enums.ChatConversationType;
 import com.crazydesert.racing.enums.ChatReportStatus;
+import com.crazydesert.racing.enums.ChatSupportTopic;
 import com.crazydesert.racing.exception.ChatAccessDeniedException;
 import com.crazydesert.racing.exception.ChatNotFoundException;
 import com.crazydesert.racing.exception.DuplicateChatReportException;
@@ -116,6 +117,20 @@ public class ChatService {
                 .orElseGet(() -> createSupportConversation(currentUser));
 
         return toConversationResponse(conversation, currentUser);
+    }
+
+    public ChatConversationResponse updateSupportTopic(
+            String currentEmail, ChatSupportTopic topic) {
+        User owner = requireUser(currentEmail);
+        if (topic == null) {
+            throw new InvalidChatRequestException("Choose a support topic");
+        }
+        ChatConversation conversation = conversationRepository
+                .findByTypeAndSupportOwnerId(ChatConversationType.SUPPORT, owner.getId())
+                .orElseGet(() -> createSupportConversation(owner));
+        conversation.setSupportTopic(topic);
+        conversation.setUpdatedAt(LocalDateTime.now());
+        return toConversationResponse(conversationRepository.save(conversation), owner);
     }
 
     @Transactional(readOnly = true)
@@ -405,6 +420,7 @@ public class ChatService {
         LocalDateTime now = LocalDateTime.now();
         ChatConversation conversation = new ChatConversation();
         conversation.setType(ChatConversationType.SUPPORT);
+        conversation.setSupportTopic(ChatSupportTopic.GENERAL);
         conversation.setConversationKey("SUPPORT:" + owner.getId());
         conversation.setSupportOwner(owner);
         conversation.setCreatedAt(now);
@@ -493,6 +509,7 @@ public class ChatService {
         return new ChatConversationResponse(
                 conversation.getId(),
                 conversation.getType(),
+                conversation.getSupportTopic(),
                 title,
                 otherUser == null ? null : otherUser.getId(),
                 buildAvatarUrl(otherUser),
@@ -641,10 +658,10 @@ public class ChatService {
                 conversation.getSupportOwner().getId(),
                 viewer.getId()
         )) {
-            return "Admins";
+            return "Administration";
         }
 
-        return conversation.getSupportOwner().getName() + " · Site Problems";
+        return conversation.getSupportOwner().getName() + " · Administration";
     }
 
     private String buildMessagePreview(ChatMessage message) {

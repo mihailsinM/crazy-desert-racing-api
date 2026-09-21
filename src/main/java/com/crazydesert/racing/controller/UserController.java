@@ -77,6 +77,11 @@ public class UserController {
         return userService.makeAdmin(id);
     }
 
+    @DeleteMapping("/users/{id}/admin-role")
+    public UserResponse removeAdmin(@PathVariable Long id) {
+        return userService.removeAdmin(id);
+    }
+
     @GetMapping("/users/me")
     public UserResponse getCurrentUser(Authentication authentication) {
 

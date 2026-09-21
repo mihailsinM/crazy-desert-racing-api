@@ -71,11 +71,12 @@ public class SecurityConfig {
                         .requestMatchers("/admin/user-photos/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
                         .requestMatchers("/users/*/make-admin").hasRole("SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/users/*/admin-role").hasRole("SUPER_ADMIN")
                         .requestMatchers("/users/*/verify-license").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/users").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/users/*").hasAnyRole("ADMIN", "SUPER_ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/users/*").hasAnyRole("ADMIN", "SUPER_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/users/*").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/users/*").hasRole("SUPER_ADMIN")
                         .requestMatchers(HttpMethod.GET, "/*/cars").hasAnyRole("ADMIN", "SUPER_ADMIN")
 
                         .requestMatchers(HttpMethod.POST, "/races").hasAnyRole("ADMIN", "SUPER_ADMIN")
