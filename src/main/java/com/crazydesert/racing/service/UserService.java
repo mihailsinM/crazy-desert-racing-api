@@ -196,10 +196,28 @@ public class UserService {
                                 "User with id " + id + " not found"
                         ));
 
+        ensureAccountIsNotProtected(user);
+        if (user.getRole() == Role.ADMIN) {
+            return toResponse(user);
+        }
         user.setRole(Role.ADMIN);
         User savedUser = userRepository.save(user);
 
         return toResponse(savedUser);
+    }
+
+    public UserResponse removeAdmin(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException(
+                        "User with id " + id + " not found"
+                ));
+
+        ensureAccountIsNotProtected(user);
+        if (user.getRole() == Role.USER) {
+            return toResponse(user);
+        }
+        user.setRole(Role.USER);
+        return toResponse(userRepository.save(user));
     }
 
     private void ensureAccountIsNotProtected(User user) {

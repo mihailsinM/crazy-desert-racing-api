@@ -147,7 +147,8 @@ public class GlobalExceptionHandler {
             DesertLiveItemNotFoundException.class,
             DesertLiveImageNotFoundException.class,
             MediaImageNotFoundException.class,
-            UserPhotoNotFoundException.class
+            UserPhotoNotFoundException.class,
+            ChatNotFoundException.class
     })
     public Map<String, String> handleDesertLiveNotFoundException(
             RuntimeException ex) {
@@ -170,9 +171,12 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    @ExceptionHandler(UserPhotoAccessDeniedException.class)
+    @ExceptionHandler({
+            UserPhotoAccessDeniedException.class,
+            ChatAccessDeniedException.class
+    })
     public Map<String, String> handleUserPhotoAccessDeniedException(
-            UserPhotoAccessDeniedException ex) {
+            RuntimeException ex) {
 
         Map<String, String> error = new HashMap<>();
         error.put("message", ex.getMessage());
@@ -192,9 +196,12 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.CONFLICT)
-    @ExceptionHandler(DuplicateUserPhotoReportException.class)
+    @ExceptionHandler({
+            DuplicateUserPhotoReportException.class,
+            DuplicateChatReportException.class
+    })
     public Map<String, String> handleDuplicateUserPhotoReportException(
-            DuplicateUserPhotoReportException ex) {
+            RuntimeException ex) {
 
         Map<String, String> error = new HashMap<>();
         error.put("message", ex.getMessage());
@@ -208,7 +215,8 @@ public class GlobalExceptionHandler {
             InvalidImageFocusException.class,
             InvalidImageFramingException.class,
             InvalidImageException.class,
-            InvalidUserPhotoException.class
+            InvalidUserPhotoException.class,
+            InvalidChatRequestException.class
     })
     public Map<String, String> handleInvalidDesertLiveRequest(
             RuntimeException ex) {
@@ -224,6 +232,15 @@ public class GlobalExceptionHandler {
     public Map<String, String> handleImageStorageException() {
         Map<String, String> error = new HashMap<>();
         error.put("message", "Failed to store image");
+
+        return error;
+    }
+
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(ChatEncryptionException.class)
+    public Map<String, String> handleChatEncryptionException() {
+        Map<String, String> error = new HashMap<>();
+        error.put("message", "Failed to process encrypted chat data");
 
         return error;
     }
