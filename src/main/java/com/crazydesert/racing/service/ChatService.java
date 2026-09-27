@@ -243,14 +243,10 @@ public class ChatService {
     @Transactional(readOnly = true)
     public ChatUnreadResponse getUnreadCount(String currentEmail) {
         User currentUser = requireUser(currentEmail);
-        long unread = accessibleConversations(currentUser).stream()
-                .mapToLong(conversation -> unreadCount(
-                        conversation,
-                        currentUser
-                ))
-                .sum();
-
-        return new ChatUnreadResponse(unread);
+        return new ChatUnreadResponse(messageRepository.countUnreadAccessible(
+                currentUser.getId(),
+                currentUser.getRole().hasAdminAccess()
+        ));
     }
 
     public void blockUser(String currentEmail, Long blockedUserId) {
