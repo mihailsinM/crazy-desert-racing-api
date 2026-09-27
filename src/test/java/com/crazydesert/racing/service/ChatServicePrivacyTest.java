@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -107,6 +108,32 @@ class ChatServicePrivacyTest {
                 List.of(),
                 chatService.getMessages("admin@example.com", 20L, null)
         );
+    }
+
+    @Test
+    void unreadCountUsesOneQueryWithoutLoadingConversations() {
+        User member = user(1L, "member@example.com", Role.USER);
+        when(userRepository.findByEmail(member.getEmail()))
+                .thenReturn(Optional.of(member));
+        when(messageRepository.countUnreadAccessible(1L, false))
+                .thenReturn(4L);
+
+        assertEquals(4L, chatService.getUnreadCount(member.getEmail()).unreadCount());
+        verify(messageRepository).countUnreadAccessible(1L, false);
+        verifyNoInteractions(conversationRepository, readStateRepository);
+    }
+
+    @Test
+    void adminUnreadCountIncludesAccessibleSupportConversations() {
+        User admin = user(3L, "admin@example.com", Role.ADMIN);
+        when(userRepository.findByEmail(admin.getEmail()))
+                .thenReturn(Optional.of(admin));
+        when(messageRepository.countUnreadAccessible(3L, true))
+                .thenReturn(6L);
+
+        assertEquals(6L, chatService.getUnreadCount(admin.getEmail()).unreadCount());
+        verify(messageRepository).countUnreadAccessible(3L, true);
+        verifyNoInteractions(conversationRepository, readStateRepository);
     }
 
     @Test
